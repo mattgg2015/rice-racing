@@ -227,6 +227,19 @@
             2000   // Far plane: increased from 1000 to 2000 for more range
           );
 
+          const isMobile = window.innerWidth <= 768;
+          if (isMobile) {
+            camera.position.z = 10; // Move camera further back
+            camera.position.y = 2.5;
+            camera.position.x = -1;
+            camera.lookAt(0, 0.3, 0);
+          } else {
+            camera.position.z = 6;
+            camera.position.y = 1.8;
+            camera.position.x = -1;
+            camera.lookAt(0, 0.3, 0);
+          }
+
           renderer = new THREE.WebGLRenderer({
             alpha: true,
             antialias: true
@@ -540,10 +553,7 @@
             // Continue without the model
           }
 
-          camera.position.z = 6;
-          camera.position.y = 1.8;
-          camera.position.x = -1;
-          camera.lookAt(0, 0.3, 0);
+          // Camera position is set earlier with mobile detection
 
           // Animation - only rotate after assembly is complete
           const animate = () => {
