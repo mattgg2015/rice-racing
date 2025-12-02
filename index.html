@@ -19,37 +19,31 @@
 
     /* Mobile responsive styles */
     @media only screen and (max-width: 768px) {
-      /* Fix vertical clipping - give car container full height */
+      /* Keep container full height to match Three.js renderer, but scale and position the car */
       .car-container {
-        transform: translate(0, 0%) scale(0.6) !important;
-        width: 100vw !important;
-        height: 50vh !important;
-        top: 20vh !important;
+        transform: translate(0, -15%) scale(0.55) !important;
+        width: 100% !important;
+        height: 100% !important;
+        top: 0 !important;
         left: 0 !important;
         overflow: visible !important;
       }
 
       .car-container.layout-split {
-        transform: translate(0, 0%) scale(0.6) !important;
-        width: 100vw !important;
-        height: 50vh !important;
-        top: 20vh !important;
+        transform: translate(0, -15%) scale(0.55) !important;
+        width: 100% !important;
+        height: 100% !important;
+        top: 0 !important;
         left: 0 !important;
         overflow: visible !important;
       }
 
-      /* Center CAD window on mobile - higher up to not cover car */
+      /* Center CAD window on mobile - positioned in middle/lower area */
       .cad-window {
         left: 50% !important;
-        top: 60% !important;
+        top: 55% !important;
         width: 92% !important;
         max-width: 92% !important;
-      }
-
-      /* Allow body to show full car without vertical clipping */
-      body {
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
       }
 
       /* Top bar adjustments */
