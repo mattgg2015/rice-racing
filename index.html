@@ -19,21 +19,21 @@
 
     /* Mobile responsive styles */
     @media only screen and (max-width: 768px) {
-      /* Thinner car on mobile */
+      /* Much thinner car on mobile - keep vertical shift, center horizontally */
       .car-container {
-        transform: translate(0, 10%) scale(0.85) !important;
+        transform: translate(0, 5%) scale(0.7) !important;
       }
 
       .car-container.layout-split {
-        transform: translate(0, 10%) scale(0.85) !important;
+        transform: translate(0, 5%) scale(0.7) !important;
       }
 
-      /* Center CAD window on mobile */
+      /* Center CAD window on mobile - higher up to not cover car */
       .cad-window {
         left: 50% !important;
-        top: 55% !important;
-        width: 90% !important;
-        max-width: 90% !important;
+        top: 42% !important;
+        width: 92% !important;
+        max-width: 92% !important;
       }
 
       /* Top bar adjustments */
@@ -44,20 +44,28 @@
       .top-bar-nav {
         font-size: 10px !important;
         gap: 4px !important;
+        justify-content: center !important;
       }
 
       .top-bar-nav > div {
         padding: 5px 10px !important;
       }
 
+      /* Hide session info on mobile */
       .top-bar-session {
-        font-size: 7px !important;
+        display: none !important;
       }
 
-      /* Make top bar container stack better on mobile */
+      /* Make top bar container better on mobile - less left padding */
       .top-bar-content {
-        grid-template-columns: auto 1fr auto !important;
-        padding: 0 16px !important;
+        grid-template-columns: auto 1fr !important;
+        padding: 0 12px !important;
+        gap: 8px !important;
+      }
+
+      /* Reduce logo left spacing */
+      .top-bar-logo {
+        margin-left: 0 !important;
       }
 
       /* Hide some UI elements on mobile for cleaner look */
