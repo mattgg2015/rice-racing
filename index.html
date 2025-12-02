@@ -19,9 +19,9 @@
 
     /* Mobile responsive styles */
     @media only screen and (max-width: 768px) {
-      /* Car centered under INITIALIZING initially */
+      /* Car centered under INITIALIZING initially - bigger */
       .car-container {
-        transform: translate(0, -10%) scale(0.75) !important;
+        transform: translate(0, -10%) scale(0.9) !important;
         width: 100% !important;
         height: 100% !important;
         top: 0 !important;
@@ -31,7 +31,7 @@
 
       /* When layout splits, shift car down */
       .car-container.layout-split {
-        transform: translate(0, 15%) scale(0.75) !important;
+        transform: translate(0, 15%) scale(0.9) !important;
         width: 100% !important;
         height: 100% !important;
         top: 0 !important;
@@ -39,12 +39,18 @@
         overflow: visible !important;
       }
 
-      /* CAD window positioned higher - above midpoint */
+      /* CAD window - fixed top position, extends downward */
       .cad-window {
         left: 50% !important;
-        top: 38% !important;
+        top: 65px !important;
+        transform: translateX(-50%) !important;
         width: 92% !important;
         max-width: 92% !important;
+      }
+
+      /* Narrower loading bar on mobile */
+      .loading-bar-container {
+        width: 280px !important;
       }
 
       /* Top bar adjustments */
@@ -759,6 +765,7 @@
 
         // Loading bar container
         React.createElement('div', {
+          className: 'loading-bar-container',
           style: {
             position: 'absolute',
             top: '50%',
