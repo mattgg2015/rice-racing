@@ -73,7 +73,7 @@
       ];
 
       const teamMembers = [
-        { name: "EGON BERGLUND", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
+        { name: "EGON FERIOLI", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
         { name: "WILL FENG", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
         { name: "DANIEL MARTINEZ", role: "CHIEF ENGINEER", subsystem: "—", year: "MECH E '28" },
         { name: "IÑIGO PÉREZ", role: "CHIEF ENGINEER", subsystem: "—", year: "MECH E '28" },
@@ -1130,18 +1130,46 @@
                   }
                 }, 'SUPPORT RICE RACING'),
 
-                // Body text
+                // Body text - broken into paragraphs
                 React.createElement('div', {
                   style: {
-                    fontFamily: '"Russo One", sans-serif',
-                    fontSize: '12px',
-                    fontWeight: '400',
-                    color: '#D4DEFF',
-                    marginBottom: '28px',
-                    lineHeight: '1.5',
-                    letterSpacing: '0.03em'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    marginBottom: '28px'
                   }
-                }, 'RICE RACING IS CONTINUALLY LOOKING FOR PARTNERSHIPS TO HELP ENHANCE THE TEAM\'S ABILITY TO PRODUCE A COMPETITION-WINNING VEHICLE. OUR SPONSORS NOT ONLY PROVIDE THE TEAM WITH NECESSARY SPACE, MATERIALS, AND FUNDS TO PRODUCE A VEHICLE THAT STANDS UP TO THE PRESTIGIOUS RICE REPUTATION, BUT FOSTERS A TEAM THAT IS PREPARED FOR THE WORLD BEYOND COLLEGE. WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.'),
+                },
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      fontWeight: '400',
+                      color: '#C4CEE8',
+                      lineHeight: '1.7',
+                      letterSpacing: '0.03em'
+                    }
+                  }, 'RICE RACING IS CONTINUALLY LOOKING FOR PARTNERSHIPS TO HELP ENHANCE THE TEAM\'S ABILITY TO PRODUCE A COMPETITION-WINNING VEHICLE.'),
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      fontWeight: '400',
+                      color: '#C4CEE8',
+                      lineHeight: '1.7',
+                      letterSpacing: '0.03em'
+                    }
+                  }, 'OUR SPONSORS NOT ONLY PROVIDE THE TEAM WITH NECESSARY SPACE, MATERIALS, AND FUNDS TO PRODUCE A VEHICLE THAT STANDS UP TO THE PRESTIGIOUS RICE REPUTATION, BUT FOSTER A TEAM THAT IS PREPARED FOR THE WORLD BEYOND COLLEGE.'),
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      fontWeight: '400',
+                      color: '#C4CEE8',
+                      lineHeight: '1.7',
+                      letterSpacing: '0.03em'
+                    }
+                  }, 'WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.')
+                ),
 
                 // Call to action buttons
                 React.createElement('div', {
@@ -1172,12 +1200,12 @@
                     style: {
                       padding: '12px 20px',
                       background: 'transparent',
-                      border: '1px solid rgba(199, 215, 255, 0.3)',
+                      border: '1px solid #FFC94A',
                       borderRadius: '2px',
                       cursor: 'pointer',
                       fontFamily: '"Russo One", sans-serif',
                       fontSize: '11px',
-                      color: '#C4CEE8',
+                      color: '#FFC94A',
                       letterSpacing: '0.08em',
                       transition: 'all 0.2s ease'
                     }
@@ -1225,22 +1253,37 @@
                     lineHeight: '1.4',
                     letterSpacing: '0.05em'
                   }
-                }, 'WE\'RE LOOKING FOR PASSIONATE ENGINEERS TO BUILD RICE\'S FIRST FORMULA SAE CAR'),
+                }, 'WE\'RE LOOKING FOR PASSIONATE, DRIVEN INDIVIDUALS WILLING TO DEDICATE SIGNIFICANT TIME AND EFFORT TO BUILD RICE\'S FIRST FORMULA SAE CAR'),
 
-                // Positions list
+                // Subsystems recruiting for
                 React.createElement('div', {
                   style: {
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px'
+                    gap: '12px',
+                    marginBottom: '20px'
                   }
                 },
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Space Mono", monospace',
+                      fontSize: '9px',
+                      fontWeight: '700',
+                      letterSpacing: '0.1em',
+                      color: '#8995B0',
+                      textTransform: 'uppercase',
+                      marginBottom: '4px'
+                    }
+                  }, 'RECRUITING FOR SUBSYSTEMS'),
                   [
-                    { label: 'MECHANICAL', desc: 'Chassis, suspension, powertrain design' },
-                    { label: 'ELECTRICAL', desc: 'Data acquisition, controls, wiring' },
-                    { label: 'SOFTWARE', desc: 'Telemetry, simulation, analysis tools' },
-                    { label: 'OPERATIONS', desc: 'Logistics, sponsorship, documentation' }
-                  ].map((pos, i) =>
+                    'AERODYNAMICS',
+                    'CHASSIS',
+                    'CONTROLS',
+                    'ELECTRICAL',
+                    'POWERTRAIN',
+                    'SUSPENSION',
+                    'BUSINESS'
+                  ].map((subsystem, i) =>
                     React.createElement('div', {
                       key: i,
                       style: {
@@ -1256,23 +1299,11 @@
                           fontFamily: '"Russo One", sans-serif',
                           fontSize: '11px',
                           fontWeight: '400',
-                          letterSpacing: '0.12em',
-                          color: '#8995B0',
-                          textTransform: 'uppercase',
-                          minWidth: '100px',
-                          flexShrink: 0
+                          letterSpacing: '0.08em',
+                          color: '#D4DEFF',
+                          textTransform: 'uppercase'
                         }
-                      }, pos.label),
-                      React.createElement('div', {
-                        style: {
-                          fontFamily: '"Russo One", sans-serif',
-                          fontSize: '11px',
-                          fontWeight: '400',
-                          color: '#C4CEE8',
-                          lineHeight: '1.4',
-                          letterSpacing: '0.04em'
-                        }
-                      }, pos.desc)
+                      }, subsystem)
                     )
                   )
                 ),
@@ -1304,7 +1335,7 @@
                       color: '#8995B0',
                       lineHeight: '1.6'
                     }
-                  }, 'CONTACT // RICE.RACING@RICE.EDU')
+                  }, 'CONTACT // RICERACING@GMAIL.COM')
                 )
               )
             )
