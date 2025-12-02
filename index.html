@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rice Racing</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./riceracing.png">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +15,55 @@
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* Mobile responsive styles */
+    @media only screen and (max-width: 768px) {
+      /* Thinner car on mobile */
+      .car-container {
+        transform: translate(0, 10%) scale(0.85) !important;
+      }
+
+      .car-container.layout-split {
+        transform: translate(0, 10%) scale(0.85) !important;
+      }
+
+      /* Center CAD window on mobile */
+      .cad-window {
+        left: 50% !important;
+        top: 55% !important;
+        width: 90% !important;
+        max-width: 90% !important;
+      }
+
+      /* Top bar adjustments */
+      .top-bar-logo img {
+        height: 32px !important;
+      }
+
+      .top-bar-nav {
+        font-size: 10px !important;
+        gap: 4px !important;
+      }
+
+      .top-bar-nav > div {
+        padding: 5px 10px !important;
+      }
+
+      .top-bar-session {
+        font-size: 7px !important;
+      }
+
+      /* Make top bar container stack better on mobile */
+      .top-bar-content {
+        grid-template-columns: auto 1fr auto !important;
+        padding: 0 16px !important;
+      }
+
+      /* Hide some UI elements on mobile for cleaner look */
+      .zone-marker {
+        display: none !important;
+      }
     }
   </style>
   <!-- Import map for Three.js ES modules -->
@@ -579,6 +630,7 @@
         },
           // Inner track (grid-aligned content container) - three equal columns
           React.createElement('div', {
+            className: 'top-bar-content',
             style: {
               width: '100%',
               maxWidth: 'calc(100% - 80px)',
@@ -590,6 +642,7 @@
           },
             // Left: Logo (no badge styling)
             React.createElement('div', {
+              className: 'top-bar-logo',
               style: {
                 display: 'flex',
                 alignItems: 'center',
@@ -610,6 +663,7 @@
 
             // Center: Navigation (strictly centered)
             React.createElement('div', {
+              className: 'top-bar-nav',
               style: {
                 display: 'flex',
                 gap: '6px',
@@ -640,6 +694,7 @@
 
             // Right: Session info
             React.createElement('div', {
+              className: 'top-bar-session',
               style: {
                 fontFamily: '"Space Mono", monospace',
                 fontSize: '10px',
@@ -656,6 +711,7 @@
         // Three.js canvas container (car viewport) - keep at 1.35 scale, just translate
         React.createElement('div', {
           ref: mountRef,
+          className: layoutSplit ? 'car-container layout-split' : 'car-container',
           style: {
             position: 'absolute',
             top: 0,
@@ -739,6 +795,7 @@
 
         // CAD software window - slides in from center, bigger and higher up
         React.createElement('div', {
+          className: 'cad-window',
           style: {
             position: 'absolute',
             top: '40%',
@@ -1344,6 +1401,7 @@
 
         // ZONE A: Axis marker (below top bar)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: '64px',
@@ -1364,6 +1422,7 @@
 
         // ZONE B: Panel vertical gutter line (left edge)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: '40%',
@@ -1378,6 +1437,7 @@
 
         // ZONE B: Panel metadata label (left side)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: 'calc(40% - 210px)',
@@ -1396,6 +1456,7 @@
 
         // ZONE B: Panel line count (bottom-right corner)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: 'calc(40% + 210px)',
@@ -1411,6 +1472,7 @@
 
         // ZONE C: Car dimension line (wheelbase - horizontal under car)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             bottom: '24%',
@@ -1466,6 +1528,7 @@
 
         // ZONE C: Viewport title (above car)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: '22%',
@@ -1483,6 +1546,7 @@
 
         // ZONE C: Viewport corner brackets (top-left)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: '20%',
@@ -1497,6 +1561,7 @@
 
         // ZONE C: Viewport corner brackets (bottom-right)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             bottom: '12%',
@@ -1511,6 +1576,7 @@
 
         // ZONE C: Vertical separator line (between panel and car viewport)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             top: '20%',
@@ -1524,6 +1590,7 @@
 
         // ZONE C: Floating readout box (inspector - bottom-right, grid-aligned)
         layoutSplit && React.createElement('div', {
+          className: 'zone-marker',
           style: {
             position: 'absolute',
             bottom: '20%',
