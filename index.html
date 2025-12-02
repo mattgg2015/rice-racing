@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rice Racing</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <!-- Import map for Three.js ES modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React and ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // Make THREE available globally for easier access
+    window.THREE = THREE;
+    window.GLTFLoader = GLTFLoader;
+
+    // Global error handler to prevent white screen
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error('Global error:', msg, error);
+      return false;
+    };
+
+    // Check if React loaded
+    if (typeof React === 'undefined') {
+      document.getElementById('root').innerHTML = '<div style="color: white; padding: 40px;">Error: React failed to load</div>';
+    }
+
+    const { useState, useEffect, useRef } = React;
+
+    function RiceRacingLanding() {
+      const mountRef = useRef(null);
+      const [loadingProgress, setLoadingProgress] = useState(0);
+      const [displayText, setDisplayText] = useState('');
+      const [currentLineIndex, setCurrentLineIndex] = useState(0);
+      const [currentCharIndex, setCurrentCharIndex] = useState(0);
+      const [showText, setShowText] = useState(false);
+      const [layoutSplit, setLayoutSplit] = useState(false);
+      const [activeTab, setActiveTab] = useState('overview');
+
+      const textLines = [
+        "PROJECT // RICE RACING",
+        "ANNOUNCING",
+        "RICE RACING",
+        "GOAL|BUILD RICE'S FIRST FORMULA SAE CAR",
+        "TEAM|LOOKING FOR MECH / ELEC TEAM LEADS",
+        "STATUS|APPLICATIONS OPEN NOW"
+      ];
+
+      const teamMembers = [
+        { name: "EGON BERGLUND", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
+        { name: "WILL FENG", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
+        { name: "DANIEL MARTINEZ", role: "CHIEF ENGINEER", subsystem: "—", year: "MECH E '28" },
+        { name: "IÑIGO PÉREZ", role: "CHIEF ENGINEER", subsystem: "—", year: "MECH E '28" },
+        { name: "IAN KHEMLANI", role: "CHIEF FINANCE OFFICER", subsystem: "BUSINESS", year: "FINANCE '28" },
+        { name: "MATTHEW GOETTING", role: "CHIEF PROGRAMMER", subsystem: "SOFTWARE", year: "CS '28" }
+      ];
+
+      // Typing animation effect - starts after loading completes
+      useEffect(() => {
+        if (!showText) return;
+        if (currentLineIndex >= textLines.length) return;
+
+        const currentLine = textLines[currentLineIndex];
+
+        if (currentCharIndex < currentLine.length) {
+          const timeout = setTimeout(() => {
+            setDisplayText(prev => prev + currentLine[currentCharIndex]);
+            setCurrentCharIndex(currentCharIndex + 1);
+          }, 30); // Fast typing speed
+          return () => clearTimeout(timeout);
+        } else if (currentLineIndex < textLines.length - 1) {
+          const timeout = setTimeout(() => {
+            setDisplayText(prev => prev + '\n');
+            setCurrentLineIndex(currentLineIndex + 1);
+            setCurrentCharIndex(0);
+          }, 400); // Pause between lines
+          return () => clearTimeout(timeout);
+        }
+      }, [currentCharIndex, currentLineIndex, showText]);
+
+      // Trigger layout split and text display when loading completes
+      useEffect(() => {
+        if (loadingProgress >= 100) {
+          setTimeout(() => {
+            setLayoutSplit(true);
+          }, 300); // Start split animation shortly after loading
+          setTimeout(() => {
+            setShowText(true);
+          }, 800); // Start typing after split begins
+        }
+      }, [loadingProgress]);
+
+      // Loading bar animation - syncs with car assembly (1500ms total)
+      useEffect(() => {
+        const duration = 1500;
+        const startTime = Date.now();
+
+        const animateProgress = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min((elapsed / duration) * 100, 100);
+          setLoadingProgress(progress);
+
+          if (progress < 100) {
+            requestAnimationFrame(animateProgress);
+          }
+        };
+
+        animateProgress();
+      }, []);
+
+      // Three.js GLTF car loader with holographic effect - wrapped in try-catch
+      useEffect(() => {
+        if (!mountRef.current) return;
+
+        let renderer;
+        let animationId;
+
+        try {
+          // Check if THREE is available
+          if (typeof THREE === 'undefined') {
+            console.error('THREE.js not loaded');
+            return;
+          }
+
+          console.log('Initializing Three.js scene...');
+
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.01,  // Near plane: reduced from 0.1 to 0.01 to prevent close clipping
+            2000   // Far plane: increased from 1000 to 2000 for more range
+          );
+
+          renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true
+          });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setClearColor(0x000000, 0);
+          renderer.localClippingEnabled = true;  // Enable clipping planes
+          mountRef.current.appendChild(renderer.domElement);
+
+          // Lighting for the model
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+          scene.add(ambientLight);
+
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+          directionalLight.position.set(5, 5, 5);
+          scene.add(directionalLight);
+
+          // Load the GLB model - wrapped in try-catch
+          let carModel;
+
+          try {
+            if (typeof GLTFLoader === 'undefined') {
+              console.error('GLTFLoader not available');
+            } else {
+              const loader = new GLTFLoader();
+
+              loader.load(
+                './formula_1.glb',
+                (gltf) => {
+                  try {
+                    console.log('Model loaded successfully!');
+                    carModel = gltf.scene;
+
+                    // Center and scale the model FIRST (before any animations)
+                    // MADE MUCH BIGGER: Increased scale factor
+                    const box = new THREE.Box3().setFromObject(carModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 8 / maxDim;  // Increased from 6 to 8 for much bigger car
+                    carModel.scale.multiplyScalar(scale);
+
+                    carModel.position.x = -center.x * scale;
+                    carModel.position.y = -center.y * scale + 0.5;
+                    carModel.position.z = -center.z * scale;
+
+                    // ROTATE to show side profile pointing left (angled toward viewer)
+                    // -85 degrees = mostly horizontal left, but angled toward viewer
+                    carModel.rotation.y = THREE.MathUtils.degToRad(-85);
+
+                    scene.add(carModel);
+
+                    // ========================================
+                    // BOTTOM-UP ASSEMBLY ANIMATION
+                    // Toggle with USE_ASSEMBLY_ANIMATION flag
+                    // ========================================
+
+                    const USE_ASSEMBLY_ANIMATION = true;
+
+                    if (USE_ASSEMBLY_ANIMATION) {
+                      console.log('Starting CLIPPING PLANE assembly animation (3D printer effect)...');
+
+                      // WIREFRAME-ONLY LOOK (no surface material)
+                      carModel.traverse((child) => {
+                        if (child.isMesh) {
+                          // HIDE SPECIFIC PARTS - add part names here to hide them
+                          const partsToHide = [
+                            'Chassis_Chassis_Blue_0'
+                          ];
+
+                          if (partsToHide.includes(child.name)) {
+                            console.log(`Hiding part: ${child.name}`);
+                            child.visible = false;
+                            return;  // Skip this part entirely
+                          }
+
+                          // Make the original mesh surface completely invisible
+                          child.material = new THREE.MeshBasicMaterial({
+                            transparent: true,
+                            opacity: 0,  // Completely invisible
+                            side: THREE.DoubleSide,
+                            clippingPlanes: [],  // Enable clipping
+                            clipShadows: true
+                          });
+
+                          // Disable frustum culling to prevent clipping during rotation
+                          child.frustumCulled = false;
+
+                          // Add wireframe overlay - THIS is what we actually see
+                          const wireframeGeo = new THREE.WireframeGeometry(child.geometry);
+                          const wireframeMat = new THREE.LineBasicMaterial({
+                            color: 0xC7D7FF,  // Structural ink color
+                            transparent: true,
+                            opacity: 0.7,  // 70% opacity for car wireframe
+                            linewidth: 1,
+                            depthTest: false,  // Disable depth testing - always visible through everything
+                            depthWrite: false,  // Don't write to depth buffer
+                            clippingPlanes: [],  // Will be populated later for build animation
+                            clipShadows: true
+                          });
+                          const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+                          wireframe.frustumCulled = false;  // Also disable for wireframe
+                          wireframe.renderOrder = 999;  // Render on top of everything
+
+                          // Store wireframe reference so we can clip it too
+                          child.userData.wireframe = wireframe;
+                          child.add(wireframe);
+                        }
+                      });
+
+                      console.log('Holographic materials applied');
+
+                      // Find the bounding box of the car to know min/max Y
+                      const bbox = new THREE.Box3().setFromObject(carModel);
+                      const minY = bbox.min.y;
+                      const maxY = bbox.max.y;
+                      const carHeight = maxY - minY;
+
+                      console.log(`Car bounds - Min Y: ${minY.toFixed(3)}, Max Y: ${maxY.toFixed(3)}, Height: ${carHeight.toFixed(3)}`);
+
+                      // Separate chassis and wheels for different clipping
+                      const chassisParts = [];
+                      const wheelParts = [];
+
+                      carModel.traverse((child) => {
+                        if (child.isMesh) {
+                          const name = child.name.toLowerCase();
+                          const parentName = child.parent?.name?.toLowerCase() || '';
+
+                          if (name.includes('wheel') || name.includes('tire') ||
+                              parentName.includes('wheel') || parentName.includes('tire')) {
+                            wheelParts.push(child);
+                          } else {
+                            chassisParts.push(child);
+                          }
+                        }
+                      });
+
+                      console.log(`Parts - Chassis: ${chassisParts.length}, Wheels: ${wheelParts.length}`);
+
+                      // Create clipping plane (normal pointing DOWN, clips everything above constant)
+                      const clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), minY);
+
+                      // Apply clipping plane to chassis parts AND their wireframes
+                      chassisParts.forEach(part => {
+                        part.material.clippingPlanes = [clippingPlane];
+
+                        // ALSO apply to wireframe
+                        const wireframe = part.userData.wireframe;
+                        if (wireframe && wireframe.material) {
+                          wireframe.material.clippingPlanes = [clippingPlane];
+                        }
+                      });
+
+                      // Hide wheels initially
+                      wheelParts.forEach(part => {
+                        part.visible = false;
+                      });
+
+                      // Flag to control rotation
+                      carModel.userData.assemblyComplete = false;
+
+                      // ANIMATE THE CLIPPING PLANE MOVING UP
+                      const chassisBuildDuration = 1500;  // 1.5 seconds to build chassis (compressed)
+                      const startTime = Date.now();
+
+                      const animateChassisBuild = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / chassisBuildDuration, 1);
+
+                        // Ease-out cubic
+                        const eased = 1 - Math.pow(1 - progress, 3);
+
+                        // Move the clipping plane from bottom to top
+                        // The clipping plane will automatically clip both mesh and wireframe
+                        const currentY = minY + (carHeight * eased);
+                        clippingPlane.constant = currentY;  // No negative sign!
+
+                        if (progress < 1) {
+                          requestAnimationFrame(animateChassisBuild);
+                        } else {
+                          // Chassis build complete
+                          console.log('Chassis build complete!');
+
+                          // Remove clipping plane from chassis and wireframes
+                          chassisParts.forEach(part => {
+                            part.material.clippingPlanes = [];
+                            const wireframe = part.userData.wireframe;
+                            if (wireframe && wireframe.material) {
+                              wireframe.material.clippingPlanes = [];
+                            }
+                          });
+                        }
+                      };
+
+                      // Add wheels in pairs: front two together, then back two together
+                      const halfWheels = Math.ceil(wheelParts.length / 2);
+                      const frontWheels = wheelParts.slice(0, halfWheels);
+                      const backWheels = wheelParts.slice(halfWheels);
+
+                      // Helper function to animate a group of wheels
+                      const animateWheelGroup = (wheels, delay) => {
+                        setTimeout(() => {
+                          wheels.forEach((wheel, index) => {
+                            console.log(`Adding wheel ${index + 1} of group`);
+                            wheel.visible = true;
+
+                            // Animate wheel scaling in
+                            const scaleStart = Date.now();
+                            const scaleDuration = 300;
+
+                            const animateWheelScale = () => {
+                              const scaleElapsed = Date.now() - scaleStart;
+                              const scaleProgress = Math.min(scaleElapsed / scaleDuration, 1);
+                              const scaleEased = 1 - Math.pow(1 - scaleProgress, 3);
+
+                              wheel.scale.setScalar(scaleEased);
+
+                              if (scaleProgress < 1) {
+                                requestAnimationFrame(animateWheelScale);
+                              }
+                            };
+
+                            wheel.scale.setScalar(0);
+                            animateWheelScale();
+                          });
+                        }, delay);
+                      };
+
+                      // Front wheels: start at 1.2s (overlapping with chassis end, compressed)
+                      animateWheelGroup(frontWheels, 1200);
+
+                      // Back wheels: start at 1.5s (right when chassis finishes, compressed)
+                      animateWheelGroup(backWheels, 1500);
+
+                      // Start rotation after assembly (compressed to 1.5s)
+                      setTimeout(() => {
+                        console.log('Assembly complete! Starting rotation...');
+                        carModel.userData.assemblyComplete = true;
+                      }, 1500);
+
+                      animateChassisBuild();
+
+                      console.log('Clipping plane animation started!');
+
+                    } else {
+                      // ========================================
+                      // INSTANT LOAD METHOD (no animation)
+                      // ========================================
+
+                      // Apply wireframe-only look (same as animated version)
+                      carModel.traverse((child) => {
+                        if (child.isMesh) {
+                          // HIDE SPECIFIC PARTS
+                          const partsToHide = [
+                            'Chassis_Chassis_Blue_0'
+                          ];
+
+                          if (partsToHide.includes(child.name)) {
+                            console.log(`Hiding part: ${child.name}`);
+                            child.visible = false;
+                            return;
+                          }
+
+                          // Make surface invisible
+                          child.material = new THREE.MeshBasicMaterial({
+                            transparent: true,
+                            opacity: 0,
+                            side: THREE.DoubleSide,
+                          });
+
+                          // Disable frustum culling to prevent clipping during rotation
+                          child.frustumCulled = false;
+
+                          // Add wireframe overlay
+                          const wireframeGeo = new THREE.WireframeGeometry(child.geometry);
+                          const wireframeMat = new THREE.LineBasicMaterial({
+                            color: 0xC7D7FF,
+                            transparent: true,
+                            opacity: 0.7,
+                            linewidth: 1,
+                            depthTest: false,  // Disable depth testing - always visible through everything
+                            depthWrite: false,  // Don't write to depth buffer
+                            clippingPlanes: [],  // Support clipping planes (not used in instant load)
+                            clipShadows: true
+                          });
+                          const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+                          wireframe.frustumCulled = false;  // Also disable for wireframe
+                          wireframe.renderOrder = 999;  // Render on top of everything
+                          child.add(wireframe);
+                        }
+                      });
+                    }
+
+                  } catch (error) {
+                    console.error('Error processing loaded model:', error);
+                  }
+                },
+                (progress) => {
+                  console.log('Loading:', (progress.loaded / progress.total * 100) + '%');
+                },
+                (error) => {
+                  console.error('Error loading model (non-critical):', error);
+                  // Don't throw - let the page continue without the model
+                }
+              );
+            }
+          } catch (loaderError) {
+            console.error('GLTF loader error (non-critical):', loaderError);
+            // Continue without the model
+          }
+
+          camera.position.z = 6;
+          camera.position.y = 1.8;
+          camera.position.x = -1;
+          camera.lookAt(0, 0.3, 0);
+
+          // Animation - only rotate after assembly is complete
+          const animate = () => {
+            animationId = requestAnimationFrame(animate);
+            if (carModel) {
+              // Only rotate if assembly is complete (or not using assembly animation)
+              if (carModel.userData.assemblyComplete !== false) {
+                carModel.rotation.y += 0.002;
+              }
+            }
+            renderer.render(scene, camera);
+          };
+          animate();
+
+          // Handle resize
+          const handleResize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          };
+          window.addEventListener('resize', handleResize);
+
+          return () => {
+            window.removeEventListener('resize', handleResize);
+            if (animationId) {
+              cancelAnimationFrame(animationId);
+            }
+            if (mountRef.current && renderer && renderer.domElement) {
+              try {
+                mountRef.current.removeChild(renderer.domElement);
+              } catch (e) {
+                console.error('Cleanup error:', e);
+              }
+            }
+          };
+        } catch (error) {
+          console.error('Three.js initialization error (non-critical):', error);
+          // Page will still render without the 3D model
+        }
+      }, []);
+
+      return React.createElement('div', {
+        style: {
+          position: 'relative',
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+          background: '#020D26'
+        }
+      },
+        // Blueprint grid background
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `
+              linear-gradient(rgba(199, 215, 255, 0.16) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(199, 215, 255, 0.16) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+            zIndex: 1
+          }
+        }),
+
+        // Stronger grid lines
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `
+              linear-gradient(rgba(199, 215, 255, 0.16) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(199, 215, 255, 0.16) 1px, transparent 1px)
+            `,
+            backgroundSize: '200px 200px',
+            zIndex: 1
+          }
+        }),
+
+        // Global top bar (application chrome) - appears with split
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '50px',
+            background: '#1A2030',
+            borderBottom: '1px solid rgba(199, 215, 255, 0.2)',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: layoutSplit ? 1 : 0,
+            transition: 'opacity 0.8s ease-in'
+          }
+        },
+          // Inner track (grid-aligned content container) - three equal columns
+          React.createElement('div', {
+            style: {
+              width: '100%',
+              maxWidth: 'calc(100% - 80px)',
+              display: 'grid',
+              gridTemplateColumns: '1fr auto 1fr',
+              alignItems: 'center',
+              padding: '0 40px'
+            }
+          },
+            // Left: Logo (no badge styling)
+            React.createElement('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start'
+              }
+            },
+              React.createElement('img', {
+                src: './riceracingwhitesmall.png',
+                alt: 'Rice Racing',
+                style: {
+                  height: '46px',
+                  width: 'auto',
+                  filter: 'brightness(1.15)',
+                  objectFit: 'contain'
+                }
+              })
+            ),
+
+            // Center: Navigation (strictly centered)
+            React.createElement('div', {
+              style: {
+                display: 'flex',
+                gap: '6px',
+                fontFamily: '"Russo One", sans-serif',
+                fontSize: '13px',
+                letterSpacing: '0.06em',
+                justifyContent: 'center'
+              }
+            },
+              ['OVERVIEW', 'TEAM', 'JOIN', 'SPONSORS'].map(tab =>
+                React.createElement('div', {
+                  key: tab,
+                  onClick: () => setActiveTab(tab.toLowerCase()),
+                  style: {
+                    padding: '7px 14px',
+                    cursor: 'pointer',
+                    color: activeTab === tab.toLowerCase() ? '#F7FAFF' : '#8995B0',
+                    background: activeTab === tab.toLowerCase() ? 'rgba(199, 215, 255, 0.12)' : 'transparent',
+                    border: activeTab === tab.toLowerCase() ? '1px solid rgba(199, 215, 255, 0.2)' : '1px solid transparent',
+                    borderRadius: '2px',
+                    transition: 'all 0.2s ease',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap'
+                  }
+                }, tab)
+              )
+            ),
+
+            // Right: Session info
+            React.createElement('div', {
+              style: {
+                fontFamily: '"Space Mono", monospace',
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                color: '#8995B0',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                textAlign: 'right'
+              }
+            }, 'SESSION 01 • MODEL: RICE_R1 • BUILD: 2026-01')
+          )
+        ),
+
+        // Three.js canvas container (car viewport) - keep at 1.35 scale, just translate
+        React.createElement('div', {
+          ref: mountRef,
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 2,
+            opacity: 0.4,
+            transform: layoutSplit
+              ? 'translate(14%, 8%) scale(1.35)'
+              : 'translate(0, 0) scale(1.35)',
+            transformOrigin: 'center center',
+            transition: 'transform 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)'
+          }
+        }),
+
+        // Loading bar container
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 5,
+            textAlign: 'center',
+            width: '400px',
+            opacity: loadingProgress < 100 ? 1 : 0,
+            transition: 'opacity 0.5s ease-out'
+          }
+        },
+          // "Initializing" text
+          React.createElement('div', {
+            style: {
+              color: '#F7FAFF',
+              fontSize: '14px',
+              fontWeight: '600',
+              letterSpacing: '3px',
+              marginBottom: '12px',
+              fontFamily: '"Eurostile Extended", "Arial Black", "Impact", sans-serif',
+              textTransform: 'uppercase'
+            }
+          }, 'INITIALIZING'),
+
+          // Progress bar background
+          React.createElement('div', {
+            style: {
+              width: '100%',
+              height: '3px',
+              background: 'rgba(199, 215, 255, 0.15)',
+              borderRadius: '2px',
+              overflow: 'hidden',
+              boxShadow: '0 0 10px rgba(199, 215, 255, 0.2)'
+            }
+          },
+            // Progress bar fill
+            React.createElement('div', {
+              style: {
+                width: `${loadingProgress}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, rgba(199, 215, 255, 0.6), rgba(199, 215, 255, 0.9))',
+                borderRadius: '2px',
+                boxShadow: '0 0 15px rgba(199, 215, 255, 0.6)',
+                transition: 'width 0.05s linear'
+              }
+            })
+          ),
+
+          // Percentage text
+          React.createElement('div', {
+            style: {
+              color: '#C4CEE8',
+              fontSize: '11px',
+              fontWeight: '500',
+              letterSpacing: '2px',
+              marginTop: '10px',
+              fontFamily: '"Eurostile Extended", "Arial Black", "Impact", sans-serif',
+              opacity: 0.8
+            }
+          }, `${Math.floor(loadingProgress)}%`)
+        ),
+
+        // CAD software window - slides in from center, bigger and higher up
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '40%',
+            left: layoutSplit ? '27%' : '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 5,
+            width: 'min(94%, 720px)',
+            maxWidth: '720px',
+            opacity: layoutSplit ? 1 : 0,
+            transition: 'all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)'
+          }
+        },
+          // Window container
+          React.createElement('div', {
+            style: {
+              border: '1px solid #C7D7FF',
+              position: 'relative',
+              background: '#181D28'
+            }
+          },
+            // Corner ticks aligned to grid
+            React.createElement('div', {
+              style: {
+                position: 'absolute',
+                top: '-1px',
+                left: '-1px',
+                width: '16px',
+                height: '16px',
+                borderTop: '2px solid #C7D7FF',
+                borderLeft: '2px solid #C7D7FF'
+              }
+            }),
+            React.createElement('div', {
+              style: {
+                position: 'absolute',
+                top: '-1px',
+                right: '-1px',
+                width: '16px',
+                height: '16px',
+                borderTop: '2px solid #C7D7FF',
+                borderRight: '2px solid #C7D7FF'
+              }
+            }),
+            React.createElement('div', {
+              style: {
+                position: 'absolute',
+                bottom: '-1px',
+                left: '-1px',
+                width: '16px',
+                height: '16px',
+                borderBottom: '2px solid #C7D7FF',
+                borderLeft: '2px solid #C7D7FF'
+              }
+            }),
+            React.createElement('div', {
+              style: {
+                position: 'absolute',
+                bottom: '-1px',
+                right: '-1px',
+                width: '16px',
+                height: '16px',
+                borderBottom: '2px solid #C7D7FF',
+                borderRight: '2px solid #C7D7FF'
+              }
+            }),
+
+            // Window title bar
+            React.createElement('div', {
+              style: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                borderBottom: '1px solid rgba(199, 215, 255, 0.2)',
+                background: 'rgba(199, 215, 255, 0.05)'
+              }
+            },
+              // File name
+              React.createElement('div', {
+                style: {
+                  fontFamily: '"Space Mono", monospace',
+                  fontSize: '10px',
+                  color: '#C4CEE8',
+                  letterSpacing: '0.05em'
+                }
+              }, 'RICE_R1.FSAE'),
+
+              // Window control dots (Mac-style traffic lights)
+              React.createElement('div', {
+                style: {
+                  display: 'flex',
+                  gap: '7px'
+                }
+              },
+                React.createElement('div', {
+                  style: {
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: '#FF5F57'
+                  }
+                }),
+                React.createElement('div', {
+                  style: {
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: '#FEBC2E'
+                  }
+                }),
+                React.createElement('div', {
+                  style: {
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: '#28C840'
+                  }
+                })
+              )
+            ),
+
+            // Window content - conditional based on activeTab
+            React.createElement('div', {
+              style: {
+                padding: '28px 32px 32px'
+              }
+            },
+              // OVERVIEW TAB
+              activeTab === 'overview' && React.createElement('div', null,
+              // Metadata label
+              displayText.split('\n')[0] && React.createElement('div', {
+                style: {
+                  fontFamily: '"Space Mono", monospace',
+                  fontSize: '11px',
+                  fontWeight: '400',
+                  letterSpacing: '0.15em',
+                  color: '#8995B0',
+                  marginBottom: '10px',
+                  opacity: 0.8
+                }
+              }, displayText.split('\n')[0]),
+
+              // Small "ANNOUNCING" label (Russo One, de-emphasized)
+              displayText.split('\n')[1] && React.createElement('div', {
+                style: {
+                  fontFamily: '"Russo One", sans-serif',
+                  fontSize: '12px',
+                  fontWeight: '400',
+                  letterSpacing: '0.15em',
+                  color: '#8995B0',
+                  marginBottom: '6px',
+                  textTransform: 'uppercase'
+                }
+              }, displayText.split('\n')[1]),
+
+              // Large "RICE RACING" heading (Russo One, brightest)
+              displayText.split('\n')[2] && React.createElement('div', {
+                style: {
+                  fontFamily: '"Russo One", sans-serif',
+                  fontSize: 'clamp(28px, 4.5vw, 48px)',
+                  fontWeight: '400',
+                  letterSpacing: '0.06em',
+                  color: '#F7FAFF',
+                  marginBottom: '20px',
+                  textTransform: 'uppercase',
+                  lineHeight: '0.95'
+                }
+              }, displayText.split('\n')[2]),
+
+              // Properties panel layout (LABEL | VALUE - all Russo One)
+              React.createElement('div', {
+                style: {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }
+              },
+                displayText.split('\n').slice(3).filter(line => line.includes('|')).map((line, i) =>
+                  React.createElement('div', {
+                    key: i,
+                    style: {
+                      display: 'flex',
+                      gap: '14px',
+                      alignItems: 'center',
+                      borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
+                      paddingLeft: '14px'
+                    }
+                  },
+                    // Label (left side - Russo One, small, dim)
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '11px',
+                        fontWeight: '400',
+                        letterSpacing: '0.12em',
+                        color: '#8995B0',
+                        textTransform: 'uppercase',
+                        minWidth: '60px',
+                        flexShrink: 0
+                      }
+                    }, line.split('|')[0]),
+
+                    // Value (right side - Russo One, bigger, brighter)
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: 'clamp(13px, 1.6vw, 15px)',
+                        fontWeight: '400',
+                        color: '#D4DEFF',
+                        lineHeight: '1.3',
+                        letterSpacing: '0.05em'
+                      }
+                    },
+                      line.split('|')[1] && line.split('|')[1].includes('APPLICATIONS')
+                        ? React.createElement('span', null,
+                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('APPLICATIONS')),
+                            React.createElement('span', {
+                              style: {
+                                textDecoration: 'underline',
+                                textDecorationColor: '#FFC94A',
+                                textDecorationThickness: '2px',
+                                textUnderlineOffset: '3px',
+                                cursor: 'pointer'
+                              }
+                            }, 'APPLICATIONS'),
+                            line.split('|')[1].substring(line.split('|')[1].indexOf('APPLICATIONS') + 'APPLICATIONS'.length)
+                          )
+                        : line.split('|')[1]
+                    )
+                  )
+                )
+              ),
+
+                // Blinking cursor (only on overview tab during typing)
+                activeTab === 'overview' && React.createElement('span', {
+                  style: {
+                    opacity: currentLineIndex < textLines.length ? 1 : 0,
+                    animation: 'blink 1s infinite',
+                    marginLeft: '4px',
+                    fontFamily: '"Space Mono", monospace',
+                    color: '#C7D7FF',
+                    fontSize: '14px'
+                  }
+                }, '|')
+              ),
+
+              // TEAM TAB
+              activeTab === 'team' && React.createElement('div', null,
+                // Module label
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '11px',
+                    fontWeight: '400',
+                    letterSpacing: '0.15em',
+                    color: '#8995B0',
+                    marginBottom: '12px',
+                    opacity: 0.8
+                  }
+                }, 'MODULE // TEAM'),
+
+                // Heading
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: 'clamp(24px, 4vw, 42px)',
+                    fontWeight: '400',
+                    letterSpacing: '0.06em',
+                    color: '#F7FAFF',
+                    marginBottom: '24px',
+                    textTransform: 'uppercase',
+                    lineHeight: '0.95'
+                  }
+                }, 'EXECUTIVE BOARD'),
+
+                // Column headers
+                React.createElement('div', {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 2fr 1.2fr 1fr',
+                    gap: '12px',
+                    paddingBottom: '8px',
+                    borderBottom: '1px solid rgba(199, 215, 255, 0.15)',
+                    marginBottom: '12px'
+                  }
+                },
+                  ['NAME', 'ROLE', 'SUBSYSTEM', 'YEAR'].map(header =>
+                    React.createElement('div', {
+                      key: header,
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '9px',
+                        fontWeight: '700',
+                        letterSpacing: '0.1em',
+                        color: '#8995B0',
+                        textTransform: 'uppercase'
+                      }
+                    }, header)
+                  )
+                ),
+
+                // Team members table
+                React.createElement('div', {
+                  style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }
+                },
+                  teamMembers.map((member, i) =>
+                    React.createElement('div', {
+                      key: i,
+                      style: {
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 2fr 1.2fr 1fr',
+                        gap: '12px',
+                        paddingTop: '10px',
+                        paddingBottom: '10px',
+                        borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(199, 215, 255, 0.08)' : 'none'
+                      }
+                    },
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '11px',
+                          fontWeight: '400',
+                          color: '#D4DEFF',
+                          letterSpacing: '0.04em'
+                        }
+                      }, member.name),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '10px',
+                          fontWeight: '400',
+                          color: '#C4CEE8',
+                          letterSpacing: '0.04em'
+                        }
+                      }, member.role),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '10px',
+                          fontWeight: '400',
+                          color: '#8995B0',
+                          letterSpacing: '0.04em'
+                        }
+                      }, member.subsystem),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Space Mono", monospace',
+                          fontSize: '10px',
+                          fontWeight: '400',
+                          color: '#8995B0',
+                          letterSpacing: '0.04em'
+                        }
+                      }, member.year)
+                    )
+                  )
+                )
+              ),
+
+              // SPONSORS TAB
+              activeTab === 'sponsors' && React.createElement('div', null,
+                // Module label
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '11px',
+                    fontWeight: '400',
+                    letterSpacing: '0.15em',
+                    color: '#8995B0',
+                    marginBottom: '12px',
+                    opacity: 0.8
+                  }
+                }, 'MODULE // SPONSORS'),
+
+                // Heading
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: 'clamp(24px, 4vw, 42px)',
+                    fontWeight: '400',
+                    letterSpacing: '0.06em',
+                    color: '#F7FAFF',
+                    marginBottom: '20px',
+                    textTransform: 'uppercase',
+                    lineHeight: '0.95'
+                  }
+                }, 'SUPPORT RICE RACING'),
+
+                // Body text
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: '12px',
+                    fontWeight: '400',
+                    color: '#D4DEFF',
+                    marginBottom: '28px',
+                    lineHeight: '1.5',
+                    letterSpacing: '0.03em'
+                  }
+                }, 'RICE RACING IS CONTINUALLY LOOKING FOR PARTNERSHIPS TO HELP ENHANCE THE TEAM\'S ABILITY TO PRODUCE A COMPETITION-WINNING VEHICLE. OUR SPONSORS NOT ONLY PROVIDE THE TEAM WITH NECESSARY SPACE, MATERIALS, AND FUNDS TO PRODUCE A VEHICLE THAT STANDS UP TO THE PRESTIGIOUS RICE REPUTATION, BUT FOSTERS A TEAM THAT IS PREPARED FOR THE WORLD BEYOND COLLEGE. WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.'),
+
+                // Call to action buttons
+                React.createElement('div', {
+                  style: {
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap'
+                  }
+                },
+                  // Contact Us button
+                  React.createElement('div', {
+                    style: {
+                      padding: '12px 20px',
+                      background: 'rgba(199, 215, 255, 0.12)',
+                      border: '1px solid rgba(199, 215, 255, 0.3)',
+                      borderRadius: '2px',
+                      cursor: 'pointer',
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      color: '#F7FAFF',
+                      letterSpacing: '0.08em',
+                      transition: 'all 0.2s ease'
+                    }
+                  }, 'CONTACT US'),
+
+                  // Download Sponsor Packet button
+                  React.createElement('div', {
+                    style: {
+                      padding: '12px 20px',
+                      background: 'transparent',
+                      border: '1px solid rgba(199, 215, 255, 0.3)',
+                      borderRadius: '2px',
+                      cursor: 'pointer',
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      color: '#C4CEE8',
+                      letterSpacing: '0.08em',
+                      transition: 'all 0.2s ease'
+                    }
+                  }, 'DOWNLOAD SPONSOR PACKET')
+                )
+              ),
+
+              // JOIN TAB
+              activeTab === 'join' && React.createElement('div', null,
+                // Module label
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '11px',
+                    fontWeight: '400',
+                    letterSpacing: '0.15em',
+                    color: '#8995B0',
+                    marginBottom: '12px',
+                    opacity: 0.8
+                  }
+                }, 'MODULE // RECRUITMENT'),
+
+                // Heading
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: 'clamp(24px, 4vw, 42px)',
+                    fontWeight: '400',
+                    letterSpacing: '0.06em',
+                    color: '#F7FAFF',
+                    marginBottom: '20px',
+                    textTransform: 'uppercase',
+                    lineHeight: '0.95'
+                  }
+                }, 'JOIN THE TEAM'),
+
+                // Subheading
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: '12px',
+                    fontWeight: '400',
+                    color: '#D4DEFF',
+                    marginBottom: '24px',
+                    lineHeight: '1.4',
+                    letterSpacing: '0.05em'
+                  }
+                }, 'WE\'RE LOOKING FOR PASSIONATE ENGINEERS TO BUILD RICE\'S FIRST FORMULA SAE CAR'),
+
+                // Positions list
+                React.createElement('div', {
+                  style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }
+                },
+                  [
+                    { label: 'MECHANICAL', desc: 'Chassis, suspension, powertrain design' },
+                    { label: 'ELECTRICAL', desc: 'Data acquisition, controls, wiring' },
+                    { label: 'SOFTWARE', desc: 'Telemetry, simulation, analysis tools' },
+                    { label: 'OPERATIONS', desc: 'Logistics, sponsorship, documentation' }
+                  ].map((pos, i) =>
+                    React.createElement('div', {
+                      key: i,
+                      style: {
+                        display: 'flex',
+                        gap: '14px',
+                        alignItems: 'center',
+                        borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
+                        paddingLeft: '14px'
+                      }
+                    },
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '11px',
+                          fontWeight: '400',
+                          letterSpacing: '0.12em',
+                          color: '#8995B0',
+                          textTransform: 'uppercase',
+                          minWidth: '100px',
+                          flexShrink: 0
+                        }
+                      }, pos.label),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '11px',
+                          fontWeight: '400',
+                          color: '#C4CEE8',
+                          lineHeight: '1.4',
+                          letterSpacing: '0.04em'
+                        }
+                      }, pos.desc)
+                    )
+                  )
+                ),
+
+                // Contact info
+                React.createElement('div', {
+                  style: {
+                    marginTop: '28px',
+                    padding: '16px',
+                    background: 'rgba(199, 215, 255, 0.05)',
+                    border: '1px solid rgba(199, 215, 255, 0.15)',
+                    borderRadius: '2px'
+                  }
+                },
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '11px',
+                      fontWeight: '400',
+                      color: '#D4DEFF',
+                      marginBottom: '8px',
+                      letterSpacing: '0.06em'
+                    }
+                  }, 'INTERESTED?'),
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Space Mono", monospace',
+                      fontSize: '10px',
+                      color: '#8995B0',
+                      lineHeight: '1.6'
+                    }
+                  }, 'CONTACT // RICE.RACING@RICE.EDU')
+                )
+              )
+            )
+          )
+        ),
+
+        // ZONE A: Axis marker (below top bar)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '64px',
+            right: '140px',
+            zIndex: 3,
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '8px',
+            color: '#C7D7FF',
+            opacity: 0.3,
+            display: 'flex',
+            gap: '8px'
+          }
+        },
+          React.createElement('span', null, 'X'),
+          React.createElement('span', null, 'Y'),
+          React.createElement('span', null, 'Z')
+        ),
+
+        // ZONE B: Panel vertical gutter line (left edge)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '40%',
+            left: 'calc(27% - 360px)',
+            transform: 'translateY(-50%)',
+            width: '1px',
+            height: '420px',
+            background: 'linear-gradient(to bottom, transparent, rgba(199, 215, 255, 0.15) 20%, rgba(199, 215, 255, 0.15) 80%, transparent)',
+            zIndex: 4
+          }
+        }),
+
+        // ZONE B: Panel metadata label (left side)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: 'calc(40% - 210px)',
+            left: 'calc(27% - 375px)',
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '7px',
+            letterSpacing: '0.1em',
+            color: '#C7D7FF',
+            opacity: 0.25,
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            transform: 'rotate(180deg)',
+            zIndex: 4
+          }
+        }, activeTab === 'overview' ? 'MODULE: OVERVIEW' : activeTab === 'team' ? 'MODULE: TEAM' : activeTab === 'sponsors' ? 'MODULE: SPONSORS' : 'MODULE: RECRUITMENT'),
+
+        // ZONE B: Panel line count (bottom-right corner)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: 'calc(40% + 210px)',
+            left: 'calc(27% + 330px)',
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '7px',
+            letterSpacing: '0.08em',
+            color: '#C7D7FF',
+            opacity: 0.25,
+            zIndex: 6
+          }
+        }, activeTab === 'team' ? 'LINES: 06' : activeTab === 'sponsors' ? 'LINES: 03' : 'LINES: 04'),
+
+        // ZONE C: Car dimension line (wheelbase - horizontal under car)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            bottom: '24%',
+            right: '18%',
+            width: '180px',
+            height: '1px',
+            background: 'rgba(199, 215, 255, 0.25)',
+            zIndex: 3
+          }
+        },
+          // Left arrow
+          React.createElement('div', {
+            style: {
+              position: 'absolute',
+              left: '-4px',
+              top: '-2px',
+              width: '0',
+              height: '0',
+              borderTop: '3px solid transparent',
+              borderBottom: '3px solid transparent',
+              borderRight: '4px solid rgba(199, 215, 255, 0.25)'
+            }
+          }),
+          // Right arrow
+          React.createElement('div', {
+            style: {
+              position: 'absolute',
+              right: '-4px',
+              top: '-2px',
+              width: '0',
+              height: '0',
+              borderTop: '3px solid transparent',
+              borderBottom: '3px solid transparent',
+              borderLeft: '4px solid rgba(199, 215, 255, 0.25)'
+            }
+          }),
+          // Label
+          React.createElement('div', {
+            style: {
+              position: 'absolute',
+              top: '-18px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '7px',
+              letterSpacing: '0.1em',
+              color: '#C7D7FF',
+              opacity: 0.3,
+              whiteSpace: 'nowrap'
+            }
+          }, 'WHEELBASE')
+        ),
+
+        // ZONE C: Viewport title (above car)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '22%',
+            right: '22%',
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '8px',
+            letterSpacing: '0.12em',
+            color: '#C7D7FF',
+            opacity: 0.35,
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            zIndex: 3
+          }
+        }, 'VIEWPORT 01 // MODEL: RICE_R1'),
+
+        // ZONE C: Viewport corner brackets (top-left)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '20%',
+            right: '42%',
+            width: '35px',
+            height: '35px',
+            borderTop: '1px solid rgba(199, 215, 255, 0.25)',
+            borderLeft: '1px solid rgba(199, 215, 255, 0.25)',
+            zIndex: 3
+          }
+        }),
+
+        // ZONE C: Viewport corner brackets (bottom-right)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            bottom: '12%',
+            right: '4%',
+            width: '35px',
+            height: '35px',
+            borderBottom: '1px solid rgba(199, 215, 255, 0.25)',
+            borderRight: '1px solid rgba(199, 215, 255, 0.25)',
+            zIndex: 3
+          }
+        }),
+
+        // ZONE C: Vertical separator line (between panel and car viewport)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '20%',
+            left: 'calc(27% + 307px + 20px)',
+            width: '1px',
+            height: '60%',
+            background: 'linear-gradient(to bottom, transparent, rgba(199, 215, 255, 0.12) 10%, rgba(199, 215, 255, 0.12) 90%, transparent)',
+            zIndex: 3
+          }
+        }),
+
+        // ZONE C: Floating readout box (inspector - bottom-right, grid-aligned)
+        layoutSplit && React.createElement('div', {
+          style: {
+            position: 'absolute',
+            bottom: '20%',
+            right: '8%',
+            background: 'rgba(24, 29, 40, 0.75)',
+            border: '1px solid rgba(199, 215, 255, 0.25)',
+            padding: '9px 11px',
+            zIndex: 3,
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '7px',
+            letterSpacing: '0.08em',
+            color: '#C7D7FF',
+            opacity: 0.45,
+            lineHeight: '1.7'
+          }
+        },
+          React.createElement('div', null, 'VIEW: ISO'),
+          React.createElement('div', null, 'ANGLE: 237°'),
+          React.createElement('div', null, 'ZOOM: 1.2×'),
+          React.createElement('div', null, 'MODE: WIREFRAME')
+        ),
+
+        // Corner accents (blueprint ink)
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            width: '50px',
+            height: '50px',
+            borderTop: '1px solid rgba(199, 215, 255, 0.2)',
+            borderRight: '1px solid rgba(199, 215, 255, 0.2)',
+            zIndex: 10,
+            opacity: layoutSplit ? 1 : 0,
+            transition: 'opacity 0.8s ease-in'
+          }
+        }),
+
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            width: '50px',
+            height: '50px',
+            borderBottom: '1px solid rgba(199, 215, 255, 0.2)',
+            borderLeft: '1px solid rgba(199, 215, 255, 0.2)',
+            zIndex: 10,
+            opacity: layoutSplit ? 1 : 0,
+            transition: 'opacity 0.8s ease-in'
+          }
+        }),
+
+        // Styles
+        React.createElement('style', null, `
+          @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+          }
+        `)
+      );
+    }
+
+    // Render the app with error handling
+    try {
+      console.log('Attempting to render React app...');
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(RiceRacingLanding));
+      console.log('React app rendered successfully!');
+    } catch (error) {
+      console.error('Failed to render React app:', error);
+      document.getElementById('root').innerHTML = '<div style="color: white; padding: 40px; background: #1a2b4a; height: 100vh;"><h1>Rice Racing</h1><p>Error loading page. Check console for details.</p></div>';
+    }
+  </script>
+</body>
+</html>
