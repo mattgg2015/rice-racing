@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rice Racing</title>
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="./riceracingsmall.png">
+  <link rel="icon" type="image/png" href="./riceracing.png">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,6 +138,7 @@
       const [showText, setShowText] = useState(false);
       const [layoutSplit, setLayoutSplit] = useState(false);
       const [activeTab, setActiveTab] = useState('overview');
+      const [showContactInfo, setShowContactInfo] = useState(false);
 
       const textLines = [
         "PROJECT // RICE RACING",
@@ -145,7 +146,8 @@
         "RICE RACING",
         "GOAL|BUILD RICE'S FIRST FORMULA SAE CAR BY SPRING 2027",
         "TEAM|LOOKING FOR MECH / ELEC TEAM LEADS",
-        "STATUS|INTEREST FORM OPEN NOW"
+        "STATUS|SUBTEAM LEAD APPLICATION OPEN NOW",
+        "FOR PARTNERSHIP AND SPONSORSHIP OPPORTUNITIES, CONTACT RICEFORMULASAE@GMAIL.COM"
       ];
 
       const teamMembers = [
@@ -168,14 +170,14 @@
           const timeout = setTimeout(() => {
             setDisplayText(prev => prev + currentLine[currentCharIndex]);
             setCurrentCharIndex(currentCharIndex + 1);
-          }, 30); // Fast typing speed
+          }, 15); // Faster typing speed
           return () => clearTimeout(timeout);
         } else if (currentLineIndex < textLines.length - 1) {
           const timeout = setTimeout(() => {
             setDisplayText(prev => prev + '\n');
             setCurrentLineIndex(currentLineIndex + 1);
             setCurrentCharIndex(0);
-          }, 400); // Pause between lines
+          }, currentLineIndex === 5 ? 600 : 200); // Longer pause before contact line
           return () => clearTimeout(timeout);
         }
       }, [currentCharIndex, currentLineIndex, showText]);
@@ -192,9 +194,9 @@
         }
       }, [loadingProgress]);
 
-      // Loading bar animation - syncs with car assembly (1500ms total)
+      // Loading bar animation - syncs with car assembly (1000ms total)
       useEffect(() => {
-        const duration = 1500;
+        const duration = 1000;
         const startTime = Date.now();
 
         const animateProgress = () => {
@@ -411,7 +413,7 @@
                       carModel.userData.assemblyComplete = false;
 
                       // ANIMATE THE CLIPPING PLANE MOVING UP
-                      const chassisBuildDuration = 1500;  // 1.5 seconds to build chassis (compressed)
+                      const chassisBuildDuration = 1000;  // 1 second to build chassis (compressed)
                       const startTime = Date.now();
 
                       const animateChassisBuild = () => {
@@ -477,17 +479,17 @@
                         }, delay);
                       };
 
-                      // Front wheels: start at 1.2s (overlapping with chassis end, compressed)
-                      animateWheelGroup(frontWheels, 1200);
+                      // Front wheels: start at 0.4s (midway through chassis build)
+                      animateWheelGroup(frontWheels, 400);
 
-                      // Back wheels: start at 1.5s (right when chassis finishes, compressed)
-                      animateWheelGroup(backWheels, 1500);
+                      // Back wheels: start at 0.6s (midway through chassis build)
+                      animateWheelGroup(backWheels, 600);
 
-                      // Start rotation after assembly (compressed to 1.5s)
+                      // Start rotation after assembly (compressed to 1.0s)
                       setTimeout(() => {
                         console.log('Assembly complete! Starting rotation...');
                         carModel.userData.assemblyComplete = true;
-                      }, 1500);
+                      }, 1000);
 
                       animateChassisBuild();
 
@@ -1045,11 +1047,11 @@
                         letterSpacing: '0.05em'
                       }
                     },
-                      line.split('|')[1] && line.split('|')[1].includes('INTEREST FORM')
+                      line.split('|')[1] && line.split('|')[1].includes('APPLICATION')
                         ? React.createElement('span', null,
-                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('INTEREST FORM')),
+                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('APPLICATION')),
                             React.createElement('a', {
-                              href: 'https://forms.gle/t52kwbhjQXgE1egAA',
+                              href: 'https://docs.google.com/forms/d/e/1FAIpQLScLppJe1QGHlEgqRv8jEIizbQE0h-GTK9EER6o2iDD6g_jXjA/viewform',
                               target: '_blank',
                               rel: 'noopener noreferrer',
                               style: {
@@ -1060,8 +1062,8 @@
                                 cursor: 'pointer',
                                 color: 'inherit'
                               }
-                            }, 'INTEREST FORM'),
-                            line.split('|')[1].substring(line.split('|')[1].indexOf('INTEREST FORM') + 'INTEREST FORM'.length)
+                            }, 'APPLICATION'),
+                            line.split('|')[1].substring(line.split('|')[1].indexOf('APPLICATION') + 'APPLICATION'.length)
                           )
                         : line.split('|')[1]
                     )
@@ -1069,17 +1071,17 @@
                 )
               ),
 
-                // Blinking cursor (only on overview tab during typing)
-                activeTab === 'overview' && React.createElement('span', {
-                  style: {
-                    opacity: currentLineIndex < textLines.length ? 1 : 0,
-                    animation: 'blink 1s infinite',
-                    marginLeft: '4px',
-                    fontFamily: '"Space Mono", monospace',
-                    color: '#C7D7FF',
-                    fontSize: '14px'
-                  }
-                }, '|')
+              // Contact info for partnerships (typed as 7th line, not part of properties)
+              displayText.split('\n')[6] && React.createElement('div', {
+                style: {
+                  marginTop: '24px',
+                  fontFamily: '"Russo One", sans-serif',
+                  fontSize: '10px',
+                  color: '#8995B0',
+                  lineHeight: '1.6',
+                  letterSpacing: '0.04em'
+                }
+              }, displayText.split('\n')[6])
               ),
 
               // TEAM TAB
@@ -1277,7 +1279,8 @@
                   }
                 },
                   // Contact Us button
-                  React.createElement('div', {
+                  React.createElement('a', {
+                    href: 'mailto:riceformulasae@gmail.com',
                     style: {
                       padding: '12px 20px',
                       background: 'rgba(199, 215, 255, 0.12)',
@@ -1288,7 +1291,9 @@
                       fontSize: '11px',
                       color: '#F7FAFF',
                       letterSpacing: '0.08em',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'none',
+                      display: 'inline-block'
                     }
                   }, 'CONTACT US'),
 
@@ -1406,34 +1411,32 @@
                   )
                 ),
 
-                // Contact info
+                // Application button
                 React.createElement('div', {
                   style: {
-                    marginTop: '28px',
-                    padding: '16px',
-                    background: 'rgba(199, 215, 255, 0.05)',
-                    border: '1px solid rgba(199, 215, 255, 0.15)',
-                    borderRadius: '2px'
+                    marginTop: '28px'
                   }
                 },
-                  React.createElement('div', {
+                  React.createElement('a', {
+                    href: 'https://docs.google.com/forms/d/e/1FAIpQLScLppJe1QGHlEgqRv8jEIizbQE0h-GTK9EER6o2iDD6g_jXjA/viewform',
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
                     style: {
+                      display: 'inline-block',
+                      padding: '10px 18px',
+                      background: 'transparent',
+                      border: '1px solid #FFC94A',
+                      borderRadius: '2px',
+                      cursor: 'pointer',
                       fontFamily: '"Russo One", sans-serif',
                       fontSize: '11px',
-                      fontWeight: '400',
-                      color: '#D4DEFF',
-                      marginBottom: '8px',
-                      letterSpacing: '0.06em'
+                      color: '#FFC94A',
+                      letterSpacing: '0.06em',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
                     }
-                  }, 'INTERESTED?'),
-                  React.createElement('div', {
-                    style: {
-                      fontFamily: '"Space Mono", monospace',
-                      fontSize: '10px',
-                      color: '#8995B0',
-                      lineHeight: '1.6'
-                    }
-                  }, 'CONTACT // RICEFORMULASAE@GMAIL.COM')
+                  }, 'Apply Here')
                 )
               )
             )
