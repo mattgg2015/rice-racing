@@ -1129,7 +1129,7 @@
                       key: header,
                       style: {
                         fontFamily: '"Space Mono", monospace',
-                        fontSize: '9px',
+                        fontSize: '11px',
                         fontWeight: '700',
                         letterSpacing: '0.1em',
                         color: '#8995B0',
@@ -1162,7 +1162,7 @@
                       React.createElement('div', {
                         style: {
                           fontFamily: '"Russo One", sans-serif',
-                          fontSize: '11px',
+                          fontSize: '13px',
                           fontWeight: '400',
                           color: '#D4DEFF',
                           letterSpacing: '0.04em'
@@ -1171,7 +1171,7 @@
                       React.createElement('div', {
                         style: {
                           fontFamily: '"Russo One", sans-serif',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           fontWeight: '400',
                           color: '#C4CEE8',
                           letterSpacing: '0.04em'
@@ -1180,7 +1180,7 @@
                       React.createElement('div', {
                         style: {
                           fontFamily: '"Russo One", sans-serif',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           fontWeight: '400',
                           color: '#8995B0',
                           letterSpacing: '0.04em'
@@ -1189,7 +1189,7 @@
                       React.createElement('div', {
                         style: {
                           fontFamily: '"Space Mono", monospace',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           fontWeight: '400',
                           color: '#8995B0',
                           letterSpacing: '0.04em'
@@ -1223,52 +1223,153 @@
                     fontWeight: '400',
                     letterSpacing: '0.06em',
                     color: '#F7FAFF',
-                    marginBottom: '20px',
+                    marginBottom: '24px',
                     textTransform: 'uppercase',
                     lineHeight: '0.95'
                   }
                 }, 'SUPPORT RICE RACING'),
 
-                // Body text - broken into paragraphs
+                // Step-by-step instructions
                 React.createElement('div', {
                   style: {
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '16px',
-                    marginBottom: '28px'
+                    gap: '20px',
+                    marginBottom: '24px'
                   }
                 },
+                  // Step 1
                   React.createElement('div', {
                     style: {
-                      fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
-                      fontWeight: '400',
-                      color: '#C4CEE8',
-                      lineHeight: '1.7',
-                      letterSpacing: '0.03em'
+                      borderLeft: '2px solid rgba(199, 215, 255, 0.4)',
+                      paddingLeft: '16px'
                     }
-                  }, 'RICE RACING IS CONTINUALLY LOOKING FOR PARTNERSHIPS TO HELP ENHANCE THE TEAM\'S ABILITY TO PRODUCE A COMPETITION-WINNING VEHICLE.'),
+                  },
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        letterSpacing: '0.1em',
+                        color: '#C7D7FF',
+                        marginBottom: '8px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'STEP 1'),
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '14px',
+                        fontWeight: '400',
+                        color: '#C4CEE8',
+                        lineHeight: '1.7',
+                        letterSpacing: '0.03em'
+                      }
+                    },
+                      'GO TO ',
+                      React.createElement('a', {
+                        href: 'https://giving.rice.edu/',
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                        style: {
+                          color: '#F7FAFF',
+                          textDecoration: 'underline',
+                          textDecorationColor: '#FFC94A',
+                          textUnderlineOffset: '3px'
+                        }
+                      }, 'GIVING.RICE.EDU'),
+                      ' AND CLICK "MAKE A GIFT"'
+                    )
+                  ),
+
+                  // Step 2
                   React.createElement('div', {
                     style: {
-                      fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
-                      fontWeight: '400',
-                      color: '#C4CEE8',
-                      lineHeight: '1.7',
-                      letterSpacing: '0.03em'
+                      borderLeft: '2px solid rgba(199, 215, 255, 0.4)',
+                      paddingLeft: '16px'
                     }
-                  }, 'OUR SPONSORS NOT ONLY PROVIDE THE TEAM WITH NECESSARY SPACE, MATERIALS, AND FUNDS TO PRODUCE A VEHICLE THAT STANDS UP TO THE PRESTIGIOUS RICE REPUTATION, BUT FOSTER A TEAM THAT IS PREPARED FOR THE WORLD BEYOND COLLEGE.'),
-                  React.createElement('div', {
-                    style: {
-                      fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
-                      fontWeight: '400',
-                      color: '#C4CEE8',
-                      lineHeight: '1.7',
-                      letterSpacing: '0.03em'
-                    }
-                  }, 'WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.')
+                  },
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        letterSpacing: '0.1em',
+                        color: '#C7D7FF',
+                        marginBottom: '8px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'STEP 2'),
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '14px',
+                        fontWeight: '400',
+                        color: '#C4CEE8',
+                        lineHeight: '1.7',
+                        letterSpacing: '0.03em',
+                        marginBottom: '12px'
+                      }
+                    }, 'WHERE IT SAYS "PLEASE SELECT AN AREA OF RICE TO SUPPORT", SELECT "OTHER" AND ENTER OUR CODE:'),
+                    // Code box with copy button
+                    React.createElement('div', {
+                      style: {
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: 'rgba(199, 215, 255, 0.08)',
+                        border: '1px solid rgba(199, 215, 255, 0.2)',
+                        borderRadius: '2px',
+                        padding: '10px 14px'
+                      }
+                    },
+                      React.createElement('span', {
+                        style: {
+                          fontFamily: '"Space Mono", monospace',
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          color: '#F7FAFF',
+                          letterSpacing: '0.15em'
+                        }
+                      }, '17739'),
+                      React.createElement('button', {
+                        onClick: () => {
+                          navigator.clipboard.writeText('17739');
+                          const btn = event.target;
+                          const originalText = btn.innerText;
+                          btn.innerText = 'COPIED!';
+                          setTimeout(() => { btn.innerText = originalText; }, 1500);
+                        },
+                        style: {
+                          background: 'rgba(255, 201, 74, 0.15)',
+                          border: '1px solid #FFC94A',
+                          borderRadius: '2px',
+                          padding: '6px 10px',
+                          cursor: 'pointer',
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '9px',
+                          color: '#FFC94A',
+                          letterSpacing: '0.08em',
+                          transition: 'all 0.2s ease'
+                        }
+                      }, 'COPY')
+                    )
+                  )
                 ),
+
+                // Closing message
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: '14px',
+                    fontWeight: '400',
+                    color: '#8995B0',
+                    lineHeight: '1.7',
+                    letterSpacing: '0.03em',
+                    marginBottom: '24px',
+                    fontStyle: 'italic'
+                  }
+                }, 'WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.'),
 
                 // Call to action buttons
                 React.createElement('div', {
@@ -1288,7 +1389,7 @@
                       borderRadius: '2px',
                       cursor: 'pointer',
                       fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: '#F7FAFF',
                       letterSpacing: '0.08em',
                       transition: 'all 0.2s ease',
@@ -1297,22 +1398,26 @@
                     }
                   }, 'CONTACT US'),
 
-                  // Sponsor Packet Coming Soon button
-                  React.createElement('div', {
+                  // Sponsor Packet button
+                  React.createElement('a', {
+                    href: './Rice Racing 2025-2026 Sponsor Guide.pdf',
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
                     style: {
                       padding: '12px 20px',
                       background: 'transparent',
                       border: '1px solid #FFC94A',
                       borderRadius: '2px',
-                      cursor: 'default',
+                      cursor: 'pointer',
                       fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: '#FFC94A',
                       letterSpacing: '0.08em',
                       transition: 'all 0.2s ease',
-                      opacity: 0.7
+                      textDecoration: 'none',
+                      display: 'inline-block'
                     }
-                  }, 'SPONSOR PACKET COMING SOON')
+                  }, 'SPONSOR PACKET')
                 )
               ),
 
@@ -1349,7 +1454,7 @@
                 React.createElement('div', {
                   style: {
                     fontFamily: '"Russo One", sans-serif',
-                    fontSize: '12px',
+                    fontSize: '14px',
                     fontWeight: '400',
                     color: '#D4DEFF',
                     marginBottom: '24px',
@@ -1370,7 +1475,7 @@
                   React.createElement('div', {
                     style: {
                       fontFamily: '"Space Mono", monospace',
-                      fontSize: '9px',
+                      fontSize: '11px',
                       fontWeight: '700',
                       letterSpacing: '0.1em',
                       color: '#8995B0',
@@ -1400,7 +1505,7 @@
                       React.createElement('div', {
                         style: {
                           fontFamily: '"Russo One", sans-serif',
-                          fontSize: '11px',
+                          fontSize: '13px',
                           fontWeight: '400',
                           letterSpacing: '0.08em',
                           color: '#D4DEFF',
@@ -1429,7 +1534,7 @@
                       borderRadius: '2px',
                       cursor: 'pointer',
                       fontFamily: '"Russo One", sans-serif',
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: '#FFC94A',
                       letterSpacing: '0.06em',
                       textDecoration: 'none',
