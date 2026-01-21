@@ -146,9 +146,10 @@
         "RICE RACING",
         "GOAL|BUILD RICE'S FIRST FORMULA SAE CAR BY SPRING 2027",
         "TEAM|LOOKING FOR MECH / ELEC TEAM LEADS",
-        "STATUS|SUBTEAM LEAD APPLICATION OPEN NOW",
-        "FOR PARTNERSHIP AND SPONSORSHIP OPPORTUNITIES, CONTACT RICEFORMULASAE@GMAIL.COM"
+        "STATUS|SUBTEAM LEAD APPLICATION OPEN NOW"
       ];
+
+      const [showContactLine, setShowContactLine] = useState(false);
 
       const teamMembers = [
         { name: "EGON FERIOLI", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
@@ -181,6 +182,16 @@
           return () => clearTimeout(timeout);
         }
       }, [currentCharIndex, currentLineIndex, showText]);
+
+      // Show contact line after typing completes
+      useEffect(() => {
+        if (currentLineIndex >= textLines.length && showText) {
+          const timeout = setTimeout(() => {
+            setShowContactLine(true);
+          }, 400);
+          return () => clearTimeout(timeout);
+        }
+      }, [currentLineIndex, showText]);
 
       // Trigger layout split and text display when loading completes
       useEffect(() => {
@@ -1071,17 +1082,19 @@
                 )
               ),
 
-              // Contact info for partnerships (typed as 7th line, not part of properties)
-              displayText.split('\n')[6] && React.createElement('div', {
+              // Contact info for partnerships (fades in after typing completes)
+              React.createElement('div', {
                 style: {
                   marginTop: '24px',
                   fontFamily: '"Russo One", sans-serif',
                   fontSize: '10px',
                   color: '#8995B0',
                   lineHeight: '1.6',
-                  letterSpacing: '0.04em'
+                  letterSpacing: '0.04em',
+                  opacity: showContactLine ? 1 : 0,
+                  transition: 'opacity 0.8s ease-in'
                 }
-              }, displayText.split('\n')[6])
+              }, 'FOR PARTNERSHIP AND SPONSORSHIP OPPORTUNITIES, CONTACT RICEFORMULASAE@GMAIL.COM')
               ),
 
               // TEAM TAB
@@ -1325,11 +1338,11 @@
                     },
                       React.createElement('span', {
                         style: {
-                          fontFamily: '"Space Mono", monospace',
-                          fontSize: '14px',
-                          fontWeight: '700',
+                          fontFamily: '"Russo One", sans-serif',
+                          fontSize: '13px',
+                          fontWeight: '400',
                           color: '#F7FAFF',
-                          letterSpacing: '0.15em'
+                          letterSpacing: '0.06em'
                         }
                       }, 'Rice Formula SAE Club'),
                       React.createElement('button', {
