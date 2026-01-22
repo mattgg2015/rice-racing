@@ -89,6 +89,16 @@
       .zone-marker {
         display: none !important;
       }
+
+      /* Make scroll hint more visible on mobile */
+      .scroll-hint {
+        margin-top: 16px !important;
+      }
+
+      /* Smaller text on mobile to fit content */
+      .cad-window {
+        font-size: 90% !important;
+      }
     }
   </style>
   <!-- Import map for Three.js ES modules -->
@@ -150,6 +160,9 @@
       ];
 
       const [showContactLine, setShowContactLine] = useState(false);
+      const [showScrollHint, setShowScrollHint] = useState(false);
+      const [hasScrolled, setHasScrolled] = useState(false);
+      const [showVideo, setShowVideo] = useState(false);
 
       const teamMembers = [
         { name: "EGON FERIOLI", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
@@ -171,7 +184,7 @@
           const timeout = setTimeout(() => {
             setDisplayText(prev => prev + currentLine[currentCharIndex]);
             setCurrentCharIndex(currentCharIndex + 1);
-          }, 15); // Faster typing speed
+          }, 8); // Even faster typing speed
           return () => clearTimeout(timeout);
         } else if (currentLineIndex < textLines.length - 1) {
           const timeout = setTimeout(() => {
@@ -183,15 +196,78 @@
         }
       }, [currentCharIndex, currentLineIndex, showText]);
 
-      // Show contact line after typing completes
+      // Show contact line after typing completes (when on last line and finished typing it)
       useEffect(() => {
-        if (currentLineIndex >= textLines.length && showText) {
+        if (showText && currentLineIndex === textLines.length - 1 && currentCharIndex >= textLines[currentLineIndex].length) {
           const timeout = setTimeout(() => {
             setShowContactLine(true);
           }, 400);
           return () => clearTimeout(timeout);
         }
-      }, [currentLineIndex, showText]);
+      }, [currentLineIndex, currentCharIndex, showText]);
+
+      // Show scroll hint after typing completes
+      useEffect(() => {
+        const lastLineIndex = textLines.length - 1;
+        const lastLine = textLines[lastLineIndex];
+        const typingComplete = showText && currentLineIndex >= lastLineIndex && currentCharIndex >= lastLine.length;
+
+        if (typingComplete && activeTab === 'overview' && !hasScrolled) {
+          const timeout = setTimeout(() => {
+            setShowScrollHint(true);
+          }, 600);
+          return () => clearTimeout(timeout);
+        } else if (activeTab !== 'overview' || hasScrolled) {
+          setShowScrollHint(false);
+        }
+      }, [showText, activeTab, currentLineIndex, currentCharIndex, hasScrolled]);
+
+      // Listen for scroll/wheel events to expand the overview (desktop + mobile)
+      useEffect(() => {
+        let touchStartY = 0;
+
+        const handleWheel = (e) => {
+          if (activeTab === 'overview' && showScrollHint && e.deltaY > 0) {
+            setHasScrolled(true);
+          }
+        };
+
+        const handleTouchStart = (e) => {
+          touchStartY = e.touches[0].clientY;
+        };
+
+        const handleTouchMove = (e) => {
+          if (activeTab === 'overview' && showScrollHint) {
+            const touchEndY = e.touches[0].clientY;
+            if (touchStartY - touchEndY > 30) { // Swiped up (scrolling down)
+              setHasScrolled(true);
+            }
+          }
+        };
+
+        window.addEventListener('wheel', handleWheel);
+        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+        return () => {
+          window.removeEventListener('wheel', handleWheel);
+          window.removeEventListener('touchstart', handleTouchStart);
+          window.removeEventListener('touchmove', handleTouchMove);
+        };
+      }, [activeTab, showScrollHint]);
+
+      // Don't reset scroll state when changing tabs - keep the expanded state
+
+      // Show video after box has expanded (delay matches expansion animation)
+      useEffect(() => {
+        if (hasScrolled) {
+          const timeout = setTimeout(() => {
+            setShowVideo(true);
+          }, 1200); // Match the 1.2s expansion animation
+          return () => clearTimeout(timeout);
+        } else {
+          setShowVideo(false);
+        }
+      }, [hasScrolled]);
 
       // Trigger layout split and text display when loading completes
       useEffect(() => {
@@ -843,18 +919,19 @@
         ),
 
         // CAD software window - slides in from center, bigger and higher up
+        // Expands when user scrolls on overview tab
         React.createElement('div', {
           className: 'cad-window',
           style: {
             position: 'absolute',
-            top: '40%',
+            top: '28%',
             left: layoutSplit ? '27%' : '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(-50%, -20%)',
             zIndex: 5,
             width: 'min(94%, 720px)',
             maxWidth: '720px',
             opacity: layoutSplit ? 1 : 0,
-            transition: 'all 1.2s cubic-bezier(0.4, 0.0, 0.2, 1)'
+            transition: 'all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
           }
         },
           // Window container
@@ -972,8 +1049,8 @@
                 padding: '28px 32px 32px'
               }
             },
-              // OVERVIEW TAB
-              activeTab === 'overview' && React.createElement('div', null,
+              // OVERVIEW TAB (use display:none instead of conditional render to keep iframe mounted)
+              React.createElement('div', { style: { display: activeTab === 'overview' ? 'block' : 'none' } },
               // Metadata label
               displayText.split('\n')[0] && React.createElement('div', {
                 style: {
@@ -1082,19 +1159,94 @@
                 )
               ),
 
-              // Contact info for partnerships (fades in after typing completes)
+              // Scroll hint (appears after contact line, disappears after scrolling)
+              !hasScrolled && React.createElement('div', {
+                className: 'scroll-hint',
+                style: {
+                  marginTop: '28px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: showScrollHint ? 1 : 0,
+                  transition: 'opacity 0.6s ease-in'
+                }
+              },
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '9px',
+                    letterSpacing: '0.15em',
+                    color: '#8995B0',
+                    textTransform: 'uppercase'
+                  }
+                }, 'SCROLL TO SEE THE COMPETITION'),
+                React.createElement('div', {
+                  style: {
+                    width: '1px',
+                    height: '20px',
+                    background: 'linear-gradient(to bottom, #8995B0, transparent)',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }
+                }),
+                React.createElement('div', {
+                  style: {
+                    width: '8px',
+                    height: '8px',
+                    borderRight: '1px solid #8995B0',
+                    borderBottom: '1px solid #8995B0',
+                    transform: 'rotate(45deg)',
+                    animation: 'bounce 1.5s ease-in-out infinite'
+                  }
+                })
+              ),
+
+              // Video section (always in DOM, animates height)
               React.createElement('div', {
                 style: {
-                  marginTop: '24px',
-                  fontFamily: '"Russo One", sans-serif',
-                  fontSize: '10px',
-                  color: '#8995B0',
-                  lineHeight: '1.6',
-                  letterSpacing: '0.04em',
-                  opacity: showContactLine ? 1 : 0,
-                  transition: 'opacity 0.8s ease-in'
+                  marginTop: hasScrolled ? '24px' : '0px',
+                  maxHeight: hasScrolled ? '340px' : '0px',
+                  overflow: 'hidden',
+                  opacity: showVideo ? 1 : 0,
+                  transition: 'max-height 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), margin-top 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
                 }
-              }, 'FOR PARTNERSHIP AND SPONSORSHIP OPPORTUNITIES, CONTACT RICEFORMULASAE@GMAIL.COM')
+              },
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '10px',
+                    letterSpacing: '0.12em',
+                    color: '#8995B0',
+                    marginBottom: '12px',
+                    textTransform: 'uppercase'
+                  }
+                }, 'THE COMPETITION'),
+                React.createElement('div', {
+                  style: {
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '56.25%',
+                    height: 0,
+                    overflow: 'hidden',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(199, 215, 255, 0.2)'
+                  }
+                },
+                  showVideo && React.createElement('iframe', {
+                    src: 'https://www.youtube.com/embed/ljp4rt0Hv8k?start=13&autoplay=1',
+                    style: {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none'
+                    },
+                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+                    allowFullScreen: true
+                  })
+                )
+              )
               ),
 
               // TEAM TAB
@@ -1811,6 +1963,14 @@
           @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+          }
+          @keyframes bounce {
+            0%, 100% { transform: rotate(45deg) translateY(0); }
+            50% { transform: rotate(45deg) translateY(4px); }
           }
         `)
       );
