@@ -156,7 +156,7 @@
         "RICE RACING",
         "GOAL|BUILD RICE'S FIRST FORMULA SAE CAR BY SPRING 2027",
         "TEAM|LOOKING FOR MECH / ELEC TEAM LEADS",
-        "STATUS|SUBTEAM LEAD APPLICATION OPEN NOW"
+        "STATUS|JOIN OUR INTEREST FORM"
       ];
 
       const [showContactLine, setShowContactLine] = useState(false);
@@ -1135,11 +1135,11 @@
                         letterSpacing: '0.05em'
                       }
                     },
-                      line.split('|')[1] && line.split('|')[1].includes('APPLICATION')
+                      line.split('|')[1] && line.split('|')[1].includes('INTEREST FORM')
                         ? React.createElement('span', null,
-                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('APPLICATION')),
+                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('INTEREST FORM')),
                             React.createElement('a', {
-                              href: 'https://docs.google.com/forms/d/e/1FAIpQLScLppJe1QGHlEgqRv8jEIizbQE0h-GTK9EER6o2iDD6g_jXjA/viewform',
+                              href: 'https://docs.google.com/forms/d/e/1FAIpQLSd8Ag9-npDp2YS_EdIa-Gm1km-550qu-A1wf1rFUyRAan4fPw/viewform',
                               target: '_blank',
                               rel: 'noopener noreferrer',
                               style: {
@@ -1150,8 +1150,8 @@
                                 cursor: 'pointer',
                                 color: 'inherit'
                               }
-                            }, 'APPLICATION'),
-                            line.split('|')[1].substring(line.split('|')[1].indexOf('APPLICATION') + 'APPLICATION'.length)
+                            }, 'INTEREST FORM'),
+                            line.split('|')[1].substring(line.split('|')[1].indexOf('INTEREST FORM') + 'INTEREST FORM'.length)
                           )
                         : line.split('|')[1]
                     )
@@ -1702,14 +1702,14 @@
                   )
                 ),
 
-                // Application button
+                // Interest form button
                 React.createElement('div', {
                   style: {
                     marginTop: '28px'
                   }
                 },
                   React.createElement('a', {
-                    href: 'https://docs.google.com/forms/d/e/1FAIpQLScLppJe1QGHlEgqRv8jEIizbQE0h-GTK9EER6o2iDD6g_jXjA/viewform',
+                    href: 'https://docs.google.com/forms/d/e/1FAIpQLSd8Ag9-npDp2YS_EdIa-Gm1km-550qu-A1wf1rFUyRAan4fPw/viewform',
                     target: '_blank',
                     rel: 'noopener noreferrer',
                     style: {
@@ -1727,7 +1727,7 @@
                       transition: 'all 0.2s ease',
                       textTransform: 'uppercase'
                     }
-                  }, 'Apply Here')
+                  }, 'Join Mailing List')
                 )
               )
             )
