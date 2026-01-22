@@ -925,11 +925,11 @@
           style: {
             position: 'absolute',
             top: '28%',
-            left: layoutSplit ? '27%' : '50%',
+            left: layoutSplit ? (hasScrolled ? '32%' : '27%') : '50%',
             transform: 'translate(-50%, -20%)',
             zIndex: 5,
-            width: 'min(94%, 720px)',
-            maxWidth: '720px',
+            width: hasScrolled ? 'min(94%, 820px)' : 'min(94%, 720px)',
+            maxWidth: hasScrolled ? '820px' : '720px',
             opacity: layoutSplit ? 1 : 0,
             transition: 'all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
           }
@@ -1046,7 +1046,7 @@
             // Window content - conditional based on activeTab
             React.createElement('div', {
               style: {
-                padding: '28px 32px 32px'
+                padding: '18px 32px 32px'
               }
             },
               // OVERVIEW TAB (use display:none instead of conditional render to keep iframe mounted)
@@ -1205,22 +1205,43 @@
               React.createElement('div', {
                 style: {
                   marginTop: hasScrolled ? '24px' : '0px',
-                  maxHeight: hasScrolled ? '340px' : '0px',
+                  maxHeight: hasScrolled ? '440px' : '0px',
                   overflow: 'hidden',
                   opacity: showVideo ? 1 : 0,
                   transition: 'max-height 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), margin-top 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
                 }
               },
+                // Title row with expanding bar
                 React.createElement('div', {
                   style: {
-                    fontFamily: '"Space Mono", monospace',
-                    fontSize: '10px',
-                    letterSpacing: '0.12em',
-                    color: '#8995B0',
-                    marginBottom: '12px',
-                    textTransform: 'uppercase'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '12px'
                   }
-                }, 'THE COMPETITION'),
+                },
+                  React.createElement('div', {
+                    style: {
+                      fontFamily: '"Space Mono", monospace',
+                      fontSize: '10px',
+                      letterSpacing: '0.12em',
+                      color: '#8995B0',
+                      textTransform: 'uppercase',
+                      whiteSpace: 'nowrap'
+                    }
+                  }, 'THE COMPETITION'),
+                  // Horizontal bar that grows rightward
+                  React.createElement('div', {
+                    style: {
+                      height: '1px',
+                      flex: 1,
+                      background: 'linear-gradient(to right, #8995B0, rgba(137, 149, 176, 0.2))',
+                      transform: showVideo ? 'scaleX(1)' : 'scaleX(0)',
+                      transformOrigin: 'left',
+                      transition: 'transform 1s cubic-bezier(0.25, 0.1, 0.25, 1) 0.2s'
+                    }
+                  })
+                ),
                 React.createElement('div', {
                   style: {
                     position: 'relative',
