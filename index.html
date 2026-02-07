@@ -121,10 +121,18 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+    // ============================================
+    // MODEL TOGGLE - Set to true for STL, false for GLB
+    // The GLB code is fully preserved below when this is false
+    // ============================================
+    const USE_STL_MODEL = false;
 
     // Make THREE available globally for easier access
     window.THREE = THREE;
     window.GLTFLoader = GLTFLoader;
+    window.STLLoader = STLLoader;
 
     // Global error handler to prevent white screen
     window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -142,27 +150,20 @@
     function RiceRacingLanding() {
       const mountRef = useRef(null);
       const [loadingProgress, setLoadingProgress] = useState(0);
-      const [displayText, setDisplayText] = useState('');
-      const [currentLineIndex, setCurrentLineIndex] = useState(0);
-      const [currentCharIndex, setCurrentCharIndex] = useState(0);
-      const [showText, setShowText] = useState(false);
       const [layoutSplit, setLayoutSplit] = useState(false);
       const [activeTab, setActiveTab] = useState('overview');
-      const [showContactInfo, setShowContactInfo] = useState(false);
+      const [menuOpen, setMenuOpen] = useState(false);
+      const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-      const textLines = [
-        "PROJECT // RICE RACING",
-        "ANNOUNCING",
-        "RICE RACING",
-        "GOAL|BUILD RICE'S FIRST FORMULA SAE CAR BY SPRING 2027",
-        "TEAM|LOOKING FOR MECH / ELEC TEAM LEADS",
-        "STATUS|JOIN OUR INTEREST FORM"
-      ];
+      // Track window resize for mobile detection
+      useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
 
-      const [showContactLine, setShowContactLine] = useState(false);
-      const [showScrollHint, setShowScrollHint] = useState(false);
-      const [hasScrolled, setHasScrolled] = useState(false);
-      const [showVideo, setShowVideo] = useState(false);
+      // Static text - no typing animation
+      const displayText = "PROJECT // RICE RACING\n\nRICE RACING";
 
       const teamMembers = [
         { name: "EGON FERIOLI", role: "CO-PRESIDENT", subsystem: "—", year: "MECH E '28" },
@@ -173,111 +174,12 @@
         { name: "MATTHEW GOETTING", role: "CHIEF PROGRAMMER", subsystem: "SOFTWARE", year: "CS '28" }
       ];
 
-      // Typing animation effect - starts after loading completes
-      useEffect(() => {
-        if (!showText) return;
-        if (currentLineIndex >= textLines.length) return;
-
-        const currentLine = textLines[currentLineIndex];
-
-        if (currentCharIndex < currentLine.length) {
-          const timeout = setTimeout(() => {
-            setDisplayText(prev => prev + currentLine[currentCharIndex]);
-            setCurrentCharIndex(currentCharIndex + 1);
-          }, 8); // Even faster typing speed
-          return () => clearTimeout(timeout);
-        } else if (currentLineIndex < textLines.length - 1) {
-          const timeout = setTimeout(() => {
-            setDisplayText(prev => prev + '\n');
-            setCurrentLineIndex(currentLineIndex + 1);
-            setCurrentCharIndex(0);
-          }, currentLineIndex === 5 ? 600 : 200); // Longer pause before contact line
-          return () => clearTimeout(timeout);
-        }
-      }, [currentCharIndex, currentLineIndex, showText]);
-
-      // Show contact line after typing completes (when on last line and finished typing it)
-      useEffect(() => {
-        if (showText && currentLineIndex === textLines.length - 1 && currentCharIndex >= textLines[currentLineIndex].length) {
-          const timeout = setTimeout(() => {
-            setShowContactLine(true);
-          }, 400);
-          return () => clearTimeout(timeout);
-        }
-      }, [currentLineIndex, currentCharIndex, showText]);
-
-      // Show scroll hint after typing completes
-      useEffect(() => {
-        const lastLineIndex = textLines.length - 1;
-        const lastLine = textLines[lastLineIndex];
-        const typingComplete = showText && currentLineIndex >= lastLineIndex && currentCharIndex >= lastLine.length;
-
-        if (typingComplete && activeTab === 'overview' && !hasScrolled) {
-          const timeout = setTimeout(() => {
-            setShowScrollHint(true);
-          }, 600);
-          return () => clearTimeout(timeout);
-        } else if (activeTab !== 'overview' || hasScrolled) {
-          setShowScrollHint(false);
-        }
-      }, [showText, activeTab, currentLineIndex, currentCharIndex, hasScrolled]);
-
-      // Listen for scroll/wheel events to expand the overview (desktop + mobile)
-      useEffect(() => {
-        let touchStartY = 0;
-
-        const handleWheel = (e) => {
-          if (activeTab === 'overview' && showScrollHint && e.deltaY > 0) {
-            setHasScrolled(true);
-          }
-        };
-
-        const handleTouchStart = (e) => {
-          touchStartY = e.touches[0].clientY;
-        };
-
-        const handleTouchMove = (e) => {
-          if (activeTab === 'overview' && showScrollHint) {
-            const touchEndY = e.touches[0].clientY;
-            if (touchStartY - touchEndY > 30) { // Swiped up (scrolling down)
-              setHasScrolled(true);
-            }
-          }
-        };
-
-        window.addEventListener('wheel', handleWheel);
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
-        window.addEventListener('touchmove', handleTouchMove, { passive: true });
-        return () => {
-          window.removeEventListener('wheel', handleWheel);
-          window.removeEventListener('touchstart', handleTouchStart);
-          window.removeEventListener('touchmove', handleTouchMove);
-        };
-      }, [activeTab, showScrollHint]);
-
-      // Don't reset scroll state when changing tabs - keep the expanded state
-
-      // Show video after box has expanded (delay matches expansion animation)
-      useEffect(() => {
-        if (hasScrolled) {
-          const timeout = setTimeout(() => {
-            setShowVideo(true);
-          }, 1200); // Match the 1.2s expansion animation
-          return () => clearTimeout(timeout);
-        } else {
-          setShowVideo(false);
-        }
-      }, [hasScrolled]);
-
-      // Trigger layout split and text display when loading completes
+      // Trigger layout split when loading completes
       useEffect(() => {
         if (loadingProgress >= 100) {
           setTimeout(() => {
             setLayoutSplit(true);
-          }, 300); // Start split animation shortly after loading
-          setTimeout(() => {
-            setShowText(true);
-          }, 800); // Start typing after split begins
+          }, 300);
         }
       }, [loadingProgress]);
 
@@ -353,17 +255,83 @@
           directionalLight.position.set(5, 5, 5);
           scene.add(directionalLight);
 
-          // Load the GLB model - wrapped in try-catch
+          // Load the car model - GLB or STL based on toggle
           let carModel;
 
-          try {
-            if (typeof GLTFLoader === 'undefined') {
-              console.error('GLTFLoader not available');
-            } else {
-              const loader = new GLTFLoader();
+          // ============================================
+          // STL MODEL LOADING (Formula SAE car)
+          // SIMPLIFIED - just raw load to see what the file looks like
+          // ============================================
+          if (USE_STL_MODEL) {
+            try {
+              const stlLoader = new STLLoader();
+              stlLoader.load(
+                './FSAE_car.stl',
+                (geometry) => {
+                  try {
+                    console.log('STL Model loaded successfully!');
 
-              loader.load(
-                './formula_1.glb',
+                    // Log the geometry info so we can see what we're dealing with
+                    geometry.computeBoundingBox();
+                    const box = geometry.boundingBox;
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    console.log('STL Bounding box:', box);
+                    console.log('STL Size - X:', size.x.toFixed(2), 'Y:', size.y.toFixed(2), 'Z:', size.z.toFixed(2));
+
+                    // Just a simple gray material so we can see the shape
+                    const material = new THREE.MeshStandardMaterial({
+                      color: 0x888888,
+                      metalness: 0.3,
+                      roughness: 0.7,
+                      side: THREE.DoubleSide
+                    });
+
+                    const mesh = new THREE.Mesh(geometry, material);
+
+                    // Center it
+                    geometry.center();
+
+                    // Scale to fit in view (normalize to ~5 units)
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 5 / maxDim;
+                    mesh.scale.setScalar(scale);
+
+                    carModel = mesh;
+                    scene.add(carModel);
+
+                    console.log('STL added to scene, scale factor:', scale);
+
+                  } catch (error) {
+                    console.error('Error processing STL model:', error);
+                  }
+                },
+                (progress) => {
+                  if (progress.total > 0) {
+                    console.log('STL Loading:', (progress.loaded / progress.total * 100).toFixed(1) + '%');
+                  }
+                },
+                (error) => {
+                  console.error('Error loading STL model:', error);
+                }
+              );
+            } catch (stlError) {
+              console.error('STL loader error:', stlError);
+            }
+          }
+          // ============================================
+          // GLB MODEL LOADING (Original Formula 1 car)
+          // All original code preserved below
+          // ============================================
+          else {
+            try {
+              if (typeof GLTFLoader === 'undefined') {
+                console.error('GLTFLoader not available');
+              } else {
+                const loader = new GLTFLoader();
+
+                loader.load(
+                  './formula_1.glb',
                 (gltf) => {
                   try {
                     console.log('Model loaded successfully!');
@@ -648,6 +616,7 @@
             console.error('GLTF loader error (non-critical):', loaderError);
             // Continue without the model
           }
+          } // End of else block (GLB loading)
 
           // Camera position is set earlier with mobile detection
 
@@ -759,9 +728,9 @@
               width: '100%',
               maxWidth: 'calc(100% - 80px)',
               display: 'grid',
-              gridTemplateColumns: '1fr auto 1fr',
+              gridTemplateColumns: isMobile ? '1fr auto 1fr' : '1fr auto 1fr',
               alignItems: 'center',
-              padding: '0 40px'
+              padding: isMobile ? '0 16px' : '0 40px'
             }
           },
             // Left: Logo (no badge styling)
@@ -777,7 +746,7 @@
                 src: './riceracingwhitesmall.png',
                 alt: 'Rice Racing',
                 style: {
-                  height: '46px',
+                  height: isMobile ? '36px' : '46px',
                   width: 'auto',
                   filter: 'brightness(1.15)',
                   objectFit: 'contain'
@@ -785,8 +754,8 @@
               })
             ),
 
-            // Center: Navigation (strictly centered)
-            React.createElement('div', {
+            // Center: Navigation (tabs on desktop, hamburger on mobile)
+            !isMobile ? React.createElement('div', {
               className: 'top-bar-nav',
               style: {
                 display: 'flex',
@@ -814,9 +783,66 @@
                   }
                 }, tab)
               )
+            ) :
+            // Mobile: Hamburger menu
+            React.createElement('div', {
+              style: {
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center'
+              }
+            },
+              // Hamburger icon
+              React.createElement('div', {
+                onClick: () => setMenuOpen(!menuOpen),
+                style: {
+                  cursor: 'pointer',
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '5px'
+                }
+              },
+                React.createElement('div', { style: { width: '24px', height: '2px', background: '#C7D7FF', transition: 'all 0.3s', transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' } }),
+                React.createElement('div', { style: { width: '24px', height: '2px', background: '#C7D7FF', transition: 'all 0.3s', opacity: menuOpen ? 0 : 1 } }),
+                React.createElement('div', { style: { width: '24px', height: '2px', background: '#C7D7FF', transition: 'all 0.3s', transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' } })
+              ),
+              // Dropdown menu
+              menuOpen && React.createElement('div', {
+                style: {
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginTop: '12px',
+                  background: '#181D28',
+                  border: '1px solid rgba(199, 215, 255, 0.2)',
+                  borderRadius: '4px',
+                  padding: '8px 0',
+                  minWidth: '140px',
+                  zIndex: 100
+                }
+              },
+                ['OVERVIEW', 'TEAM', 'JOIN', 'SPONSORS'].map(tab =>
+                  React.createElement('div', {
+                    key: tab,
+                    onClick: () => { setActiveTab(tab.toLowerCase()); setMenuOpen(false); },
+                    style: {
+                      padding: '10px 20px',
+                      cursor: 'pointer',
+                      fontFamily: '"Russo One", sans-serif',
+                      fontSize: '13px',
+                      letterSpacing: '0.06em',
+                      color: activeTab === tab.toLowerCase() ? '#FFC94A' : '#C4CEE8',
+                      background: activeTab === tab.toLowerCase() ? 'rgba(199, 215, 255, 0.08)' : 'transparent',
+                      transition: 'all 0.2s ease'
+                    }
+                  }, tab)
+                )
+              )
             ),
 
-            // Right: Session info
+            // Right: Session info (hidden on mobile)
             React.createElement('div', {
               className: 'top-bar-session',
               style: {
@@ -826,7 +852,8 @@
                 color: '#8995B0',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
-                textAlign: 'right'
+                textAlign: 'right',
+                display: isMobile ? 'none' : 'block'
               }
             }, 'SESSION 01 • MODEL: RICE_R1 • BUILD: 2026-01')
           )
@@ -918,18 +945,17 @@
           }, `${Math.floor(loadingProgress)}%`)
         ),
 
-        // CAD software window - slides in from center, bigger and higher up
-        // Expands when user scrolls on overview tab
+        // CAD software window - fixed size, centered on mobile
         React.createElement('div', {
           className: 'cad-window',
           style: {
             position: 'absolute',
-            top: '28%',
-            left: layoutSplit ? (hasScrolled ? '32%' : '27%') : '50%',
-            transform: 'translate(-50%, -20%)',
+            top: isMobile ? '12%' : '18%',
+            left: isMobile ? '50%' : (layoutSplit ? '30%' : '50%'),
+            transform: 'translate(-50%, -10%)',
             zIndex: 5,
-            width: hasScrolled ? 'min(94%, 820px)' : 'min(94%, 720px)',
-            maxWidth: hasScrolled ? '820px' : '720px',
+            width: isMobile ? '94%' : 'min(94%, 820px)',
+            maxWidth: '820px',
             opacity: layoutSplit ? 1 : 0,
             transition: 'all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
           }
@@ -1064,19 +1090,6 @@
                 }
               }, displayText.split('\n')[0]),
 
-              // Small "ANNOUNCING" label (Russo One, de-emphasized)
-              displayText.split('\n')[1] && React.createElement('div', {
-                style: {
-                  fontFamily: '"Russo One", sans-serif',
-                  fontSize: '12px',
-                  fontWeight: '400',
-                  letterSpacing: '0.15em',
-                  color: '#8995B0',
-                  marginBottom: '6px',
-                  textTransform: 'uppercase'
-                }
-              }, displayText.split('\n')[1]),
-
               // Large "RICE RACING" heading (Russo One, brightest)
               displayText.split('\n')[2] && React.createElement('div', {
                 style: {
@@ -1085,193 +1098,488 @@
                   fontWeight: '400',
                   letterSpacing: '0.06em',
                   color: '#F7FAFF',
-                  marginBottom: '20px',
+                  marginBottom: '24px',
                   textTransform: 'uppercase',
                   lineHeight: '0.95'
                 }
               }, displayText.split('\n')[2]),
 
-              // Properties panel layout (LABEL | VALUE - all Russo One)
+              // ============================================
+              // TIMELINE BLOG FEED
+              // ============================================
               React.createElement('div', {
                 style: {
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px'
+                  maxHeight: '520px',
+                  overflowY: 'auto',
+                  paddingRight: '12px'
                 }
               },
-                displayText.split('\n').slice(3).filter(line => line.includes('|')).map((line, i) =>
-                  React.createElement('div', {
-                    key: i,
-                    style: {
-                      display: 'flex',
-                      gap: '14px',
-                      alignItems: 'center',
-                      borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
-                      paddingLeft: '14px'
-                    }
-                  },
-                    // Label (left side - Russo One, small, dim)
-                    React.createElement('div', {
-                      style: {
-                        fontFamily: '"Russo One", sans-serif',
-                        fontSize: '11px',
-                        fontWeight: '400',
-                        letterSpacing: '0.12em',
-                        color: '#8995B0',
-                        textTransform: 'uppercase',
-                        minWidth: '60px',
-                        flexShrink: 0
-                      }
-                    }, line.split('|')[0]),
-
-                    // Value (right side - Russo One, bigger, brighter)
-                    React.createElement('div', {
-                      style: {
-                        fontFamily: '"Russo One", sans-serif',
-                        fontSize: 'clamp(13px, 1.6vw, 15px)',
-                        fontWeight: '400',
-                        color: '#D4DEFF',
-                        lineHeight: '1.3',
-                        letterSpacing: '0.05em'
-                      }
-                    },
-                      line.split('|')[1] && line.split('|')[1].includes('INTEREST FORM')
-                        ? React.createElement('span', null,
-                            line.split('|')[1].substring(0, line.split('|')[1].indexOf('INTEREST FORM')),
-                            React.createElement('a', {
-                              href: 'https://docs.google.com/forms/d/e/1FAIpQLSd8Ag9-npDp2YS_EdIa-Gm1km-550qu-A1wf1rFUyRAan4fPw/viewform',
-                              target: '_blank',
-                              rel: 'noopener noreferrer',
-                              style: {
-                                textDecoration: 'underline',
-                                textDecorationColor: '#FFC94A',
-                                textDecorationThickness: '2px',
-                                textUnderlineOffset: '3px',
-                                cursor: 'pointer',
-                                color: 'inherit'
-                              }
-                            }, 'INTEREST FORM'),
-                            line.split('|')[1].substring(line.split('|')[1].indexOf('INTEREST FORM') + 'INTEREST FORM'.length)
-                          )
-                        : line.split('|')[1]
-                    )
-                  )
-                )
-              ),
-
-              // Scroll hint (appears after contact line, disappears after scrolling)
-              !hasScrolled && React.createElement('div', {
-                className: 'scroll-hint',
-                style: {
-                  marginTop: '28px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  opacity: showScrollHint ? 1 : 0,
-                  transition: 'opacity 0.6s ease-in'
-                }
-              },
-                React.createElement('div', {
-                  style: {
-                    fontFamily: '"Space Mono", monospace',
-                    fontSize: '9px',
-                    letterSpacing: '0.15em',
-                    color: '#8995B0',
-                    textTransform: 'uppercase'
-                  }
-                }, 'SCROLL TO SEE THE COMPETITION'),
-                React.createElement('div', {
-                  style: {
-                    width: '1px',
-                    height: '20px',
-                    background: 'linear-gradient(to bottom, #8995B0, transparent)',
-                    animation: 'pulse 1.5s ease-in-out infinite'
-                  }
-                }),
-                React.createElement('div', {
-                  style: {
-                    width: '8px',
-                    height: '8px',
-                    borderRight: '1px solid #8995B0',
-                    borderBottom: '1px solid #8995B0',
-                    transform: 'rotate(45deg)',
-                    animation: 'bounce 1.5s ease-in-out infinite'
-                  }
-                })
-              ),
-
-              // Video section (always in DOM, animates height)
-              React.createElement('div', {
-                style: {
-                  marginTop: hasScrolled ? '24px' : '0px',
-                  maxHeight: hasScrolled ? '440px' : '0px',
-                  overflow: 'hidden',
-                  opacity: showVideo ? 1 : 0,
-                  transition: 'max-height 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), margin-top 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
-                }
-              },
-                // Title row with expanding bar
-                React.createElement('div', {
-                  style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '12px'
-                  }
-                },
-                  React.createElement('div', {
-                    style: {
-                      fontFamily: '"Space Mono", monospace',
-                      fontSize: '10px',
-                      letterSpacing: '0.12em',
-                      color: '#8995B0',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap'
-                    }
-                  }, 'THE COMPETITION'),
-                  // Horizontal bar that grows rightward
-                  React.createElement('div', {
-                    style: {
-                      height: '1px',
-                      flex: 1,
-                      background: 'linear-gradient(to right, #8995B0, rgba(137, 149, 176, 0.2))',
-                      transform: showVideo ? 'scaleX(1)' : 'scaleX(0)',
-                      transformOrigin: 'left',
-                      transition: 'transform 1s cubic-bezier(0.25, 0.1, 0.25, 1) 0.2s'
-                    }
-                  })
-                ),
+                // Timeline container with vertical line
                 React.createElement('div', {
                   style: {
                     position: 'relative',
-                    width: '100%',
-                    paddingBottom: '56.25%',
-                    height: 0,
-                    overflow: 'hidden',
-                    borderRadius: '4px',
-                    border: '1px solid rgba(199, 215, 255, 0.2)'
+                    paddingLeft: '24px'
                   }
                 },
-                  showVideo && React.createElement('iframe', {
-                    src: 'https://www.youtube.com/embed/ljp4rt0Hv8k?start=13&autoplay=1',
+                  // Vertical timeline line
+                  React.createElement('div', {
                     style: {
                       position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      border: 'none'
+                      left: '6px',
+                      top: '8px',
+                      bottom: '20px',
+                      width: '2px',
+                      background: 'linear-gradient(to bottom, rgba(199, 215, 255, 0.4), rgba(199, 215, 255, 0.1))'
+                    }
+                  }),
+
+                  // ---- BLOG ENTRY 1: First General Body Meeting ----
+                  React.createElement('div', {
+                    style: {
+                      position: 'relative',
+                      marginBottom: '32px'
+                    }
+                  },
+                    // Timeline node (circle)
+                    React.createElement('div', {
+                      style: {
+                        position: 'absolute',
+                        left: '-21px',
+                        top: '6px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: '#C7D7FF',
+                        border: '2px solid #181D28'
+                      }
+                    }),
+                    // Date
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '10px',
+                        letterSpacing: '0.12em',
+                        color: '#8995B0',
+                        marginBottom: '6px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'FEB 5, 2026'),
+                    // Title
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '16px',
+                        fontWeight: '400',
+                        letterSpacing: '0.05em',
+                        color: '#F7FAFF',
+                        marginBottom: '10px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'FIRST GENERAL BODY MEETING'),
+                    // Text
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                        color: '#C4CEE8',
+                        lineHeight: '1.6',
+                        marginBottom: '14px'
+                      }
                     },
-                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-                    allowFullScreen: true
-                  })
+                      'Thank you to everyone who came out to Rice Racing\'s first General Body Meeting! We were thrilled by the incredible turnout and energy. To stay connected, follow us on Instagram (',
+                      React.createElement('a', {
+                        href: 'https://instagram.com/ricefsae',
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                        style: {
+                          color: '#FFC94A',
+                          textDecoration: 'none'
+                        }
+                      }, '@RiceFSAE'),
+                      ') and join our Slack.'
+                    ),
+                    // Images - Main image (constrained height)
+                    React.createElement('div', {
+                      style: {
+                        marginBottom: '8px'
+                      }
+                    },
+                      React.createElement('img', {
+                        src: './IMG_2008 (1).jpg',
+                        alt: 'General Body Meeting',
+                        style: {
+                          width: '100%',
+                          maxHeight: '200px',
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      })
+                    ),
+                    // Images - Two smaller images in a row
+                    React.createElement('div', {
+                      style: {
+                        display: 'flex',
+                        gap: '8px'
+                      }
+                    },
+                      React.createElement('img', {
+                        src: './IMG_1988 (1).jpg',
+                        alt: 'GBM Photo 2',
+                        style: {
+                          width: 'calc(50% - 4px)',
+                          height: 'auto',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      }),
+                      React.createElement('img', {
+                        src: './IMG_2034 (1).jpg',
+                        alt: 'GBM Photo 3',
+                        style: {
+                          width: 'calc(50% - 4px)',
+                          height: 'auto',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      })
+                    )
+                  ),
+
+                  // ---- BLOG ENTRY 2: Onboarding Subteam Leads ----
+                  React.createElement('div', {
+                    style: {
+                      position: 'relative',
+                      marginBottom: '32px'
+                    }
+                  },
+                    // Timeline node (circle)
+                    React.createElement('div', {
+                      style: {
+                        position: 'absolute',
+                        left: '-21px',
+                        top: '6px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: '#C7D7FF',
+                        border: '2px solid #181D28'
+                      }
+                    }),
+                    // Date
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '10px',
+                        letterSpacing: '0.12em',
+                        color: '#8995B0',
+                        marginBottom: '6px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'JAN 30, 2026'),
+                    // Title
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '16px',
+                        fontWeight: '400',
+                        letterSpacing: '0.05em',
+                        color: '#F7FAFF',
+                        marginBottom: '10px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'ONBOARDING SUBTEAM LEADS'),
+                    // Text
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                        color: '#C4CEE8',
+                        lineHeight: '1.6',
+                        marginBottom: '14px'
+                      }
+                    },
+                      'After a competitive selection process, we are proud to announce our new sub-team leads for Rice Racing\'s debut season. ',
+                      React.createElement('span', {
+                        onClick: () => setActiveTab('team'),
+                        style: {
+                          color: '#FFC94A',
+                          textDecoration: 'underline',
+                          textDecorationColor: '#FFC94A',
+                          textUnderlineOffset: '3px',
+                          cursor: 'pointer'
+                        }
+                      }, 'Learn more on the Team page'),
+                      '.'
+                    ),
+                    // Images - Two side by side
+                    React.createElement('div', {
+                      style: {
+                        display: 'flex',
+                        gap: '8px'
+                      }
+                    },
+                      React.createElement('img', {
+                        src: './anonimostory.com_Instagram_ricefsae_3824098580974334749_79345219097.jpeg',
+                        alt: 'Subteam Leads 1',
+                        style: {
+                          width: 'calc(50% - 4px)',
+                          height: 'auto',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      }),
+                      React.createElement('img', {
+                        src: './anonimostory.com_Instagram_ricefsae_3824098574481540400_79345219097.jpeg',
+                        alt: 'Subteam Leads 2',
+                        style: {
+                          width: 'calc(50% - 4px)',
+                          height: 'auto',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      })
+                    )
+                  ),
+
+                  // ---- BLOG ENTRY 3: Announcing Subteam Lead Applications ----
+                  React.createElement('div', {
+                    style: {
+                      position: 'relative',
+                      marginBottom: '32px'
+                    }
+                  },
+                    // Timeline node (circle)
+                    React.createElement('div', {
+                      style: {
+                        position: 'absolute',
+                        left: '-21px',
+                        top: '6px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: '#C7D7FF',
+                        border: '2px solid #181D28'
+                      }
+                    }),
+                    // Date
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '10px',
+                        letterSpacing: '0.12em',
+                        color: '#8995B0',
+                        marginBottom: '6px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'DEC 18, 2025'),
+                    // Title
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '16px',
+                        fontWeight: '400',
+                        letterSpacing: '0.05em',
+                        color: '#F7FAFF',
+                        marginBottom: '10px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'ANNOUNCING SUBTEAM LEAD APPLICATIONS'),
+                    // Text
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                        color: '#C4CEE8',
+                        lineHeight: '1.6',
+                        marginBottom: '14px'
+                      }
+                    },
+                      'We are excited to officially open applications for Subteam Lead positions for Rice Racing. Subteam leads play a central role in the technical direction, organization, and execution of the team. Our application is due January 18, 2026.'
+                    ),
+                    // Applications Closed link (grayed out)
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '12px',
+                        letterSpacing: '0.05em',
+                        color: '#6B7280',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px',
+                        cursor: 'not-allowed'
+                      }
+                    }, 'APPLICATIONS CLOSED')
+                  ),
+
+                  // ---- BLOG ENTRY 4: Announcing Rice Racing ----
+                  React.createElement('div', {
+                    style: {
+                      position: 'relative',
+                      marginBottom: '32px'
+                    }
+                  },
+                    // Timeline node (circle)
+                    React.createElement('div', {
+                      style: {
+                        position: 'absolute',
+                        left: '-21px',
+                        top: '6px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: '#C7D7FF',
+                        border: '2px solid #181D28'
+                      }
+                    }),
+                    // Date
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Space Mono", monospace',
+                        fontSize: '10px',
+                        letterSpacing: '0.12em',
+                        color: '#8995B0',
+                        marginBottom: '6px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'DEC 13, 2025'),
+                    // Title
+                    React.createElement('div', {
+                      style: {
+                        fontFamily: '"Russo One", sans-serif',
+                        fontSize: '16px',
+                        fontWeight: '400',
+                        letterSpacing: '0.05em',
+                        color: '#F7FAFF',
+                        marginBottom: '10px',
+                        textTransform: 'uppercase'
+                      }
+                    }, 'ANNOUNCING RICE RACING'),
+                    // Bullet points
+                    React.createElement('div', {
+                      style: {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        marginTop: '4px'
+                      }
+                    },
+                      // GOAL
+                      React.createElement('div', {
+                        style: {
+                          display: 'flex',
+                          gap: '12px',
+                          alignItems: 'baseline',
+                          borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
+                          paddingLeft: '12px'
+                        }
+                      },
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Russo One", sans-serif',
+                            fontSize: '11px',
+                            letterSpacing: '0.1em',
+                            color: '#8995B0',
+                            width: '55px',
+                            flexShrink: 0
+                          }
+                        }, 'GOAL'),
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Inter", sans-serif',
+                            fontSize: '13px',
+                            color: '#C4CEE8',
+                            lineHeight: '1.5'
+                          }
+                        }, 'Build Rice\'s first Formula SAE car by Spring 2027')
+                      ),
+                      // TEAM
+                      React.createElement('div', {
+                        style: {
+                          display: 'flex',
+                          gap: '12px',
+                          alignItems: 'baseline',
+                          borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
+                          paddingLeft: '12px'
+                        }
+                      },
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Russo One", sans-serif',
+                            fontSize: '11px',
+                            letterSpacing: '0.1em',
+                            color: '#8995B0',
+                            width: '55px',
+                            flexShrink: 0
+                          }
+                        }, 'TEAM'),
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Inter", sans-serif',
+                            fontSize: '13px',
+                            color: '#C4CEE8',
+                            lineHeight: '1.5'
+                          }
+                        }, 'Looking for Mech / Elec / CS / Business')
+                      ),
+                      // STATUS
+                      React.createElement('div', {
+                        style: {
+                          display: 'flex',
+                          gap: '12px',
+                          alignItems: 'baseline',
+                          borderLeft: '1px solid rgba(199, 215, 255, 0.15)',
+                          paddingLeft: '12px'
+                        }
+                      },
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Russo One", sans-serif',
+                            fontSize: '11px',
+                            letterSpacing: '0.1em',
+                            color: '#8995B0',
+                            width: '55px',
+                            flexShrink: 0
+                          }
+                        }, 'STATUS'),
+                        React.createElement('div', {
+                          style: {
+                            fontFamily: '"Inter", sans-serif',
+                            fontSize: '13px',
+                            color: '#C4CEE8',
+                            lineHeight: '1.5'
+                          }
+                        },
+                          'Join our ',
+                          React.createElement('a', {
+                            href: 'https://docs.google.com/forms/d/e/1FAIpQLSd8Ag9-npDp2YS_EdIa-Gm1km-550qu-A1wf1rFUyRAan4fPw/viewform',
+                            target: '_blank',
+                            rel: 'noopener noreferrer',
+                            style: {
+                              color: '#FFC94A',
+                              textDecoration: 'underline',
+                              textDecorationColor: '#FFC94A',
+                              textUnderlineOffset: '3px'
+                            }
+                          }, 'mailing list')
+                        )
+                      )
+                    )
+                  )
                 )
               )
               ),
 
               // TEAM TAB
-              activeTab === 'team' && React.createElement('div', null,
+              activeTab === 'team' && React.createElement('div', {
+                style: {
+                  maxHeight: '580px',
+                  overflowY: 'auto',
+                  paddingRight: '12px'
+                }
+              },
                 // Module label
                 React.createElement('div', {
                   style: {
@@ -1285,102 +1593,326 @@
                   }
                 }, 'MODULE // TEAM'),
 
-                // Heading
+                // Executive Board Heading
                 React.createElement('div', {
                   style: {
                     fontFamily: '"Russo One", sans-serif',
-                    fontSize: 'clamp(24px, 4vw, 42px)',
+                    fontSize: '18px',
                     fontWeight: '400',
                     letterSpacing: '0.06em',
                     color: '#F7FAFF',
-                    marginBottom: '24px',
-                    textTransform: 'uppercase',
-                    lineHeight: '0.95'
+                    marginBottom: '16px',
+                    textTransform: 'uppercase'
                   }
                 }, '\'26 SEASON EXECUTIVE BOARD'),
 
-                // Column headers
+                // Executive Row 1 (4 people)
                 React.createElement('div', {
                   style: {
                     display: 'grid',
-                    gridTemplateColumns: '2fr 2fr 1.2fr 1fr',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
                     gap: '12px',
-                    paddingBottom: '8px',
-                    borderBottom: '1px solid rgba(199, 215, 255, 0.15)',
                     marginBottom: '12px'
                   }
                 },
-                  ['NAME', 'ROLE', 'SUBSYSTEM', 'YEAR'].map(header =>
-                    React.createElement('div', {
-                      key: header,
-                      style: {
-                        fontFamily: '"Space Mono", monospace',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        letterSpacing: '0.1em',
-                        color: '#8995B0',
-                        textTransform: 'uppercase'
-                      }
-                    }, header)
+                  [
+                    { name: 'Egon Ferioli', role: 'Co-President', img: './exec_egon.jpeg', scale: '1.2', pos: 'center 50%' },
+                    { name: 'Will Feng', role: 'Co-President', img: './exec_will.jpeg', scale: '1.2', pos: '58% 65%' },
+                    { name: 'Iñigo Pérez', role: 'Chief Engineer', img: './exec_inigo.jpeg', scale: '1', pos: 'center center' },
+                    { name: 'Daniel Martinez', role: 'Chief Engineer', img: './exec_daniel.jpeg', scale: '1.2', pos: '55% 60%' }
+                  ].map((person, i) =>
+                    React.createElement('div', { key: i, style: { textAlign: 'center' } },
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          paddingBottom: '100%',
+                          position: 'relative',
+                          marginBottom: '8px',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      },
+                        React.createElement('img', {
+                          src: person.img,
+                          alt: person.name,
+                          style: {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: person.pos || 'center center',
+                            transform: `scale(${person.scale || 1})`
+                          }
+                        })
+                      ),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '12px',
+                          color: '#F7FAFF',
+                          marginBottom: '2px'
+                        }
+                      }, person.name),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '10px',
+                          color: '#8995B0'
+                        }
+                      }, person.role)
+                    )
                   )
                 ),
 
-                // Team members table
+                // Executive Row 2 (3 people)
                 React.createElement('div', {
                   style: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                    gap: '12px',
+                    marginBottom: '28px'
                   }
                 },
-                  teamMembers.map((member, i) =>
-                    React.createElement('div', {
-                      key: i,
-                      style: {
-                        display: 'grid',
-                        gridTemplateColumns: '2fr 2fr 1.2fr 1fr',
-                        gap: '12px',
-                        paddingTop: '10px',
-                        paddingBottom: '10px',
-                        borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(199, 215, 255, 0.08)' : 'none'
-                      }
-                    },
+                  [
+                    { name: 'Ian Khemlani', role: 'CFO / Treasurer', img: './exec_ian.jpeg', scale: '1', pos: 'center center' },
+                    { name: 'Matthew Goetting', role: 'Chief Technology Officer', img: './exec_matthew.jpg', scale: '1', pos: 'center center' },
+                    { name: 'Ashley Fu', role: 'Chief Marketing Officer', img: './exec_ashley.JPG', scale: '1', pos: 'center 65%' }
+                  ].map((person, i) =>
+                    React.createElement('div', { key: i, style: { textAlign: 'center' } },
                       React.createElement('div', {
                         style: {
-                          fontFamily: '"Russo One", sans-serif',
-                          fontSize: '13px',
-                          fontWeight: '400',
-                          color: '#D4DEFF',
-                          letterSpacing: '0.04em'
+                          width: '100%',
+                          paddingBottom: '100%',
+                          position: 'relative',
+                          marginBottom: '8px',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
                         }
-                      }, member.name),
+                      },
+                        React.createElement('img', {
+                          src: person.img,
+                          alt: person.name,
+                          style: {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: person.pos || 'center center',
+                            transform: `scale(${person.scale || 1})`
+                          }
+                        })
+                      ),
                       React.createElement('div', {
                         style: {
-                          fontFamily: '"Russo One", sans-serif',
+                          fontFamily: '"Inter", sans-serif',
                           fontSize: '12px',
-                          fontWeight: '400',
-                          color: '#C4CEE8',
-                          letterSpacing: '0.04em'
+                          color: '#F7FAFF',
+                          marginBottom: '2px'
                         }
-                      }, member.role),
+                      }, person.name),
                       React.createElement('div', {
                         style: {
-                          fontFamily: '"Russo One", sans-serif',
-                          fontSize: '12px',
-                          fontWeight: '400',
-                          color: '#8995B0',
-                          letterSpacing: '0.04em'
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '10px',
+                          color: '#8995B0'
                         }
-                      }, member.subsystem),
+                      }, person.role)
+                    )
+                  )
+                ),
+
+                // Subteam Leads Heading
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: '18px',
+                    fontWeight: '400',
+                    letterSpacing: '0.06em',
+                    color: '#F7FAFF',
+                    marginBottom: '16px',
+                    textTransform: 'uppercase'
+                  }
+                }, '\'26 SEASON SUBTEAM LEADS'),
+
+                // Subteam Row 1: Aero, Chassis
+                React.createElement('div', {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }
+                },
+                  [
+                    { name: 'Nathan de Botton', role: 'Aerodynamics', img: './subteam_nathan.jpeg' },
+                    { name: 'Alejandro Andrade', role: 'Aerodynamics', img: './subteam_alejandro.jpeg' },
+                    { name: 'Sasha Miller', role: 'Chassis', img: './subteam_sasha.jpeg' },
+                    { name: 'Aneesh Depa', role: 'Chassis', img: './subteam_aneesh.jpeg' }
+                  ].map((person, i) =>
+                    React.createElement('div', { key: i, style: { textAlign: 'center' } },
                       React.createElement('div', {
                         style: {
-                          fontFamily: '"Space Mono", monospace',
-                          fontSize: '12px',
-                          fontWeight: '400',
-                          color: '#8995B0',
-                          letterSpacing: '0.04em'
+                          width: '100%',
+                          paddingBottom: '100%',
+                          position: 'relative',
+                          marginBottom: '8px',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
                         }
-                      }, member.year)
+                      },
+                        React.createElement('img', {
+                          src: person.img,
+                          alt: person.name,
+                          style: {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }
+                        })
+                      ),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '12px',
+                          color: '#F7FAFF',
+                          marginBottom: '2px'
+                        }
+                      }, person.name),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '10px',
+                          color: '#8995B0'
+                        }
+                      }, person.role)
+                    )
+                  )
+                ),
+
+                // Subteam Row 2: Controls, Electrical
+                React.createElement('div', {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }
+                },
+                  [
+                    { name: 'McKinley Garner', role: 'Controls', img: './subteam_mckinley.jpeg' },
+                    { name: 'Marc Alcolea', role: 'Controls', img: './subteam_marc.jpeg' },
+                    { name: 'BanAnh Doan', role: 'Electrical', img: './subteam_bananh.jpeg' },
+                    { name: 'Akim Bonhomme', role: 'Electrical', img: './subteam_akim.jpeg' }
+                  ].map((person, i) =>
+                    React.createElement('div', { key: i, style: { textAlign: 'center' } },
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          paddingBottom: '100%',
+                          position: 'relative',
+                          marginBottom: '8px',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      },
+                        React.createElement('img', {
+                          src: person.img,
+                          alt: person.name,
+                          style: {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }
+                        })
+                      ),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '12px',
+                          color: '#F7FAFF',
+                          marginBottom: '2px'
+                        }
+                      }, person.name),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '10px',
+                          color: '#8995B0'
+                        }
+                      }, person.role)
+                    )
+                  )
+                ),
+
+                // Subteam Row 3: Powertrain, Suspension
+                React.createElement('div', {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }
+                },
+                  [
+                    { name: 'James Clubley', role: 'Powertrain', img: './subteam_james.jpeg' },
+                    { name: 'Peyton Bowers', role: 'Powertrain', img: './subteam_peyton.jpeg' },
+                    { name: 'Steven Ortiz', role: 'Suspension', img: './subteam_steven.jpeg' },
+                    { name: 'Marilyn Gan', role: 'Suspension', img: './subteam_marilyn.jpeg' }
+                  ].map((person, i) =>
+                    React.createElement('div', { key: i, style: { textAlign: 'center' } },
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          paddingBottom: '100%',
+                          position: 'relative',
+                          marginBottom: '8px',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(199, 215, 255, 0.2)'
+                        }
+                      },
+                        React.createElement('img', {
+                          src: person.img,
+                          alt: person.name,
+                          style: {
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }
+                        })
+                      ),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '12px',
+                          color: '#F7FAFF',
+                          marginBottom: '2px'
+                        }
+                      }, person.name),
+                      React.createElement('div', {
+                        style: {
+                          fontFamily: '"Inter", sans-serif',
+                          fontSize: '10px',
+                          color: '#8995B0'
+                        }
+                      }, person.role)
                     )
                   )
                 )
@@ -1444,27 +1976,26 @@
                     }, 'STEP 1'),
                     React.createElement('div', {
                       style: {
-                        fontFamily: '"Russo One", sans-serif',
-                        fontSize: '14px',
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '13px',
                         fontWeight: '400',
                         color: '#C4CEE8',
-                        lineHeight: '1.7',
-                        letterSpacing: '0.03em'
+                        lineHeight: '1.6'
                       }
                     },
-                      'GO TO ',
+                      'Go to ',
                       React.createElement('a', {
                         href: 'https://giving.rice.edu/',
                         target: '_blank',
                         rel: 'noopener noreferrer',
                         style: {
-                          color: '#F7FAFF',
+                          color: '#FFC94A',
                           textDecoration: 'underline',
                           textDecorationColor: '#FFC94A',
                           textUnderlineOffset: '3px'
                         }
-                      }, 'GIVING.RICE.EDU'),
-                      ' AND CLICK "MAKE A GIFT"'
+                      }, 'giving.rice.edu'),
+                      ' and click "Make a Gift"'
                     )
                   ),
 
@@ -1488,15 +2019,14 @@
                     }, 'STEP 2'),
                     React.createElement('div', {
                       style: {
-                        fontFamily: '"Russo One", sans-serif',
-                        fontSize: '14px',
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '13px',
                         fontWeight: '400',
                         color: '#C4CEE8',
-                        lineHeight: '1.7',
-                        letterSpacing: '0.03em',
+                        lineHeight: '1.6',
                         marginBottom: '12px'
                       }
-                    }, 'WHERE IT SAYS "PLEASE SELECT AN AREA OF RICE TO SUPPORT", SELECT "OTHER" AND ENTER OUR OFFICIAL NAME:'),
+                    }, 'Where it says "Please select an area of Rice to support", select "Other" and enter our official name:'),
                     // Code box with copy button
                     React.createElement('div', {
                       style: {
@@ -1546,16 +2076,15 @@
                 // Closing message
                 React.createElement('div', {
                   style: {
-                    fontFamily: '"Russo One", sans-serif',
-                    fontSize: '14px',
+                    fontFamily: '"Inter", sans-serif',
+                    fontSize: '13px',
                     fontWeight: '400',
                     color: '#8995B0',
-                    lineHeight: '1.7',
-                    letterSpacing: '0.03em',
+                    lineHeight: '1.6',
                     marginBottom: '24px',
                     fontStyle: 'italic'
                   }
-                }, 'WITHOUT OUR SPONSORS, OUR PROJECT IS SIMPLY NOT POSSIBLE.'),
+                }, 'Without our sponsors, our project is simply not possible.'),
 
                 // Call to action buttons
                 React.createElement('div', {
@@ -1639,15 +2168,14 @@
                 // Subheading
                 React.createElement('div', {
                   style: {
-                    fontFamily: '"Russo One", sans-serif',
-                    fontSize: '14px',
+                    fontFamily: '"Inter", sans-serif',
+                    fontSize: '13px',
                     fontWeight: '400',
-                    color: '#D4DEFF',
+                    color: '#C4CEE8',
                     marginBottom: '24px',
-                    lineHeight: '1.4',
-                    letterSpacing: '0.05em'
+                    lineHeight: '1.6'
                   }
-                }, 'WE\'RE LOOKING FOR PASSIONATE, DRIVEN INDIVIDUALS WILLING TO DEDICATE SIGNIFICANT TIME AND EFFORT TO BUILD RICE\'S FIRST FORMULA SAE CAR'),
+                }, 'We\'re looking for passionate, driven individuals willing to dedicate significant time and effort to build Rice\'s first Formula SAE car.'),
 
                 // Subsystems recruiting for
                 React.createElement('div', {
@@ -1670,13 +2198,13 @@
                     }
                   }, 'RECRUITING FOR SUBSYSTEMS'),
                   [
-                    'AERODYNAMICS',
-                    'CHASSIS',
-                    'CONTROLS',
-                    'ELECTRICAL',
-                    'POWERTRAIN',
-                    'SUSPENSION',
-                    'BUSINESS'
+                    'Aerodynamics',
+                    'Chassis',
+                    'Controls',
+                    'Electrical',
+                    'Powertrain',
+                    'Suspension',
+                    'Business'
                   ].map((subsystem, i) =>
                     React.createElement('div', {
                       key: i,
@@ -1690,12 +2218,10 @@
                     },
                       React.createElement('div', {
                         style: {
-                          fontFamily: '"Russo One", sans-serif',
+                          fontFamily: '"Inter", sans-serif',
                           fontSize: '13px',
                           fontWeight: '400',
-                          letterSpacing: '0.08em',
-                          color: '#D4DEFF',
-                          textTransform: 'uppercase'
+                          color: '#C4CEE8'
                         }
                       }, subsystem)
                     )
