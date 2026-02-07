@@ -162,6 +162,21 @@
         return () => window.removeEventListener('resize', handleResize);
       }, []);
 
+      // Preload team images to prevent lag when switching to Team tab
+      useEffect(() => {
+        const teamImages = [
+          './exec_egon.jpeg', './exec_will.jpeg', './exec_inigo.jpeg', './exec_daniel.jpeg',
+          './exec_ian.jpeg', './exec_matthew.jpg', './exec_ashley.JPG',
+          './subteam_nathan.jpeg', './subteam_alejandro.jpeg', './subteam_sasha.jpeg', './subteam_aneesh.jpeg',
+          './subteam_mckinley.jpeg', './subteam_marc.jpeg', './subteam_bananh.jpeg', './subteam_akim.jpeg',
+          './subteam_james.jpeg', './subteam_peyton.jpeg', './subteam_steven.jpeg', './subteam_marilyn.jpeg'
+        ];
+        teamImages.forEach(src => {
+          const img = new Image();
+          img.src = src;
+        });
+      }, []);
+
       // Static text - no typing animation
       const displayText = "PROJECT // RICE RACING\n\nRICE RACING";
 
@@ -1025,17 +1040,7 @@
                 background: 'rgba(199, 215, 255, 0.05)'
               }
             },
-              // File name
-              React.createElement('div', {
-                style: {
-                  fontFamily: '"Space Mono", monospace',
-                  fontSize: '10px',
-                  color: '#C4CEE8',
-                  letterSpacing: '0.05em'
-                }
-              }, 'RICE_R1.FSAE'),
-
-              // Window control dots (Mac-style traffic lights)
+              // Window control dots (Mac-style traffic lights) - LEFT
               React.createElement('div', {
                 style: {
                   display: 'flex',
@@ -1066,7 +1071,17 @@
                     background: '#28C840'
                   }
                 })
-              )
+              ),
+
+              // File name - RIGHT
+              React.createElement('div', {
+                style: {
+                  fontFamily: '"Space Mono", monospace',
+                  fontSize: '10px',
+                  color: '#C4CEE8',
+                  letterSpacing: '0.05em'
+                }
+              }, 'RICE_R1.FSAE')
             ),
 
             // Window content - conditional based on activeTab
