@@ -155,12 +155,53 @@
       const [menuOpen, setMenuOpen] = useState(false);
       const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+      // Window state: 'normal', 'fullscreen', 'minimized', 'closed'
+      const [windowState, setWindowState] = useState('normal');
+
+      // Draggable window position
+      const [windowPos, setWindowPos] = useState({ x: 0, y: 0 });
+      const [isDragging, setIsDragging] = useState(false);
+      const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
       // Track window resize for mobile detection
       useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
       }, []);
+
+      // Handle dragging
+      useEffect(() => {
+        const handleMouseMove = (e) => {
+          if (!isDragging) return;
+          const deltaX = e.clientX - dragStart.x;
+          const deltaY = e.clientY - dragStart.y;
+          setWindowPos({ x: deltaX, y: deltaY });
+        };
+
+        const handleMouseUp = () => {
+          setIsDragging(false);
+        };
+
+        if (isDragging) {
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('mouseup', handleMouseUp);
+        };
+      }, [isDragging, dragStart]);
+
+      // Handle tab change - restore window if closed/minimized
+      const handleTabChange = (tab) => {
+        if (windowState === 'closed' || windowState === 'minimized') {
+          setWindowState('normal');
+        }
+        setActiveTab(tab);
+        setMenuOpen(false);
+      };
 
       // Preload team images to prevent lag when switching to Team tab
       useEffect(() => {
@@ -748,13 +789,15 @@
               padding: isMobile ? '0 16px' : '0 40px'
             }
           },
-            // Left: Logo (no badge styling)
+            // Left: Logo - CLICKABLE to go home
             React.createElement('div', {
               className: 'top-bar-logo',
+              onClick: () => handleTabChange('overview'),
               style: {
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-start'
+                justifyContent: 'flex-start',
+                cursor: 'pointer'
               }
             },
               React.createElement('img', {
@@ -784,7 +827,7 @@
               ['OVERVIEW', 'TEAM', 'JOIN', 'SPONSORS'].map(tab =>
                 React.createElement('div', {
                   key: tab,
-                  onClick: () => setActiveTab(tab.toLowerCase()),
+                  onClick: () => handleTabChange(tab.toLowerCase()),
                   style: {
                     padding: '7px 14px',
                     cursor: 'pointer',
@@ -841,7 +884,7 @@
                 ['OVERVIEW', 'TEAM', 'JOIN', 'SPONSORS'].map(tab =>
                   React.createElement('div', {
                     key: tab,
-                    onClick: () => { setActiveTab(tab.toLowerCase()); setMenuOpen(false); },
+                    onClick: () => handleTabChange(tab.toLowerCase()),
                     style: {
                       padding: '10px 20px',
                       cursor: 'pointer',
@@ -960,19 +1003,21 @@
           }, `${Math.floor(loadingProgress)}%`)
         ),
 
-        // CAD software window - fixed size, centered on mobile
-        React.createElement('div', {
+        // CAD software window - fixed size, centered on mobile, with window states
+        windowState !== 'closed' && React.createElement('div', {
           className: 'cad-window',
           style: {
-            position: 'absolute',
-            top: isMobile ? '12%' : '18%',
-            left: isMobile ? '50%' : (layoutSplit ? '30%' : '50%'),
-            transform: 'translate(-50%, -10%)',
+            position: windowState === 'fullscreen' ? 'fixed' : 'absolute',
+            top: windowState === 'fullscreen' ? '70px' : (windowState === 'minimized' ? '80%' : (isMobile ? '12%' : '18%')),
+            left: windowState === 'fullscreen' ? '50%' : (windowState === 'minimized' ? '50%' : (isMobile ? '50%' : (layoutSplit ? '30%' : '50%'))),
+            transform: windowState === 'fullscreen'
+              ? `translate(calc(-50% + ${windowPos.x}px), ${windowPos.y}px)`
+              : `translate(calc(-50% + ${windowPos.x}px), calc(-10% + ${windowPos.y}px))`,
             zIndex: 5,
-            width: isMobile ? '94%' : 'min(94%, 820px)',
-            maxWidth: '820px',
+            width: windowState === 'fullscreen' ? '95vw' : (windowState === 'minimized' ? '280px' : (isMobile ? '94%' : 'min(94%, 820px)')),
+            maxWidth: windowState === 'fullscreen' ? '1200px' : '820px',
             opacity: layoutSplit ? 1 : 0,
-            transition: 'all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)'
+            transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)'
           }
         },
           // Window container
@@ -1029,46 +1074,68 @@
               }
             }),
 
-            // Window title bar
+            // Window title bar - DRAGGABLE
             React.createElement('div', {
+              onMouseDown: (e) => {
+                if (e.target.closest('.window-control')) return; // Don't drag when clicking buttons
+                setIsDragging(true);
+                setDragStart({ x: e.clientX - windowPos.x, y: e.clientY - windowPos.y });
+              },
               style: {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '8px 12px',
-                borderBottom: '1px solid rgba(199, 215, 255, 0.2)',
-                background: 'rgba(199, 215, 255, 0.05)'
+                borderBottom: windowState === 'minimized' ? 'none' : '1px solid rgba(199, 215, 255, 0.2)',
+                background: 'rgba(199, 215, 255, 0.05)',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                userSelect: 'none'
               }
             },
-              // Window control dots (Mac-style traffic lights) - LEFT
+              // Window control dots (Mac-style traffic lights) - LEFT - FUNCTIONAL
               React.createElement('div', {
                 style: {
                   display: 'flex',
                   gap: '7px'
                 }
               },
+                // Red - Close
                 React.createElement('div', {
+                  className: 'window-control',
+                  onClick: () => setWindowState('closed'),
                   style: {
                     width: '9px',
                     height: '9px',
                     borderRadius: '50%',
-                    background: '#FF5F57'
+                    background: '#FF5F57',
+                    cursor: 'pointer',
+                    transition: 'transform 0.1s'
                   }
                 }),
+                // Yellow - Minimize
                 React.createElement('div', {
+                  className: 'window-control',
+                  onClick: () => setWindowState(windowState === 'minimized' ? 'normal' : 'minimized'),
                   style: {
                     width: '9px',
                     height: '9px',
                     borderRadius: '50%',
-                    background: '#FEBC2E'
+                    background: '#FEBC2E',
+                    cursor: 'pointer',
+                    transition: 'transform 0.1s'
                   }
                 }),
+                // Green - Fullscreen
                 React.createElement('div', {
+                  className: 'window-control',
+                  onClick: () => setWindowState(windowState === 'fullscreen' ? 'normal' : 'fullscreen'),
                   style: {
                     width: '9px',
                     height: '9px',
                     borderRadius: '50%',
-                    background: '#28C840'
+                    background: '#28C840',
+                    cursor: 'pointer',
+                    transition: 'transform 0.1s'
                   }
                 })
               ),
@@ -1084,10 +1151,12 @@
               }, 'RICE_R1.FSAE')
             ),
 
-            // Window content - conditional based on activeTab
-            React.createElement('div', {
+            // Window content - conditional based on activeTab (hidden when minimized)
+            windowState !== 'minimized' && React.createElement('div', {
               style: {
-                padding: '18px 32px 32px'
+                padding: '18px 32px 32px',
+                maxHeight: windowState === 'fullscreen' ? 'calc(100vh - 150px)' : '580px',
+                overflowY: 'auto'
               }
             },
               // OVERVIEW TAB (use display:none instead of conditional render to keep iframe mounted)
@@ -1318,7 +1387,7 @@
                     },
                       'After a competitive selection process, we are proud to announce our new sub-team leads for Rice Racing\'s debut season. ',
                       React.createElement('span', {
-                        onClick: () => setActiveTab('team'),
+                        onClick: () => handleTabChange('team'),
                         style: {
                           color: '#FFC94A',
                           textDecoration: 'underline',
@@ -1619,7 +1688,7 @@
                     marginBottom: '16px',
                     textTransform: 'uppercase'
                   }
-                }, '\'26 SEASON EXECUTIVE BOARD'),
+                }, '2026-27 SEASON EXECUTIVE BOARD'),
 
                 // Executive Row 1 (4 people)
                 React.createElement('div', {
@@ -1631,10 +1700,10 @@
                   }
                 },
                   [
-                    { name: 'Egon Ferioli', role: 'Co-President', img: './exec_egon.jpeg', scale: '1.2', pos: 'center 50%' },
-                    { name: 'Will Feng', role: 'Co-President', img: './exec_will.jpeg', scale: '1.2', pos: '58% 65%' },
-                    { name: 'Iñigo Pérez', role: 'Chief Engineer', img: './exec_inigo.jpeg', scale: '1', pos: 'center center' },
-                    { name: 'Daniel Martinez', role: 'Chief Engineer', img: './exec_daniel.jpeg', scale: '1.2', pos: '55% 60%' }
+                    { name: 'Egon Ferioli', role: 'Co-President', img: './exec_egon.jpeg', scale: '1.2', posY: '50%', tx: '0%' },
+                    { name: 'Will Feng', role: 'Co-President', img: './exec_will.jpeg', scale: '1.25', posY: '65%', tx: '3%' },
+                    { name: 'Iñigo Pérez', role: 'Chief Engineer', img: './exec_inigo.jpeg', scale: '1', posY: '50%', tx: '0%' },
+                    { name: 'Daniel Martinez', role: 'Chief Engineer', img: './exec_daniel.jpeg', scale: '1.2', posY: '60%', tx: '0%' }
                   ].map((person, i) =>
                     React.createElement('div', { key: i, style: { textAlign: 'center' } },
                       React.createElement('div', {
@@ -1658,8 +1727,8 @@
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            objectPosition: person.pos || 'center center',
-                            transform: `scale(${person.scale || 1})`
+                            objectPosition: `center ${person.posY || '50%'}`,
+                            transform: `scale(${person.scale || 1}) translateX(${person.tx || '0%'})`
                           }
                         })
                       ),
@@ -1753,7 +1822,7 @@
                     marginBottom: '16px',
                     textTransform: 'uppercase'
                   }
-                }, '\'26 SEASON SUBTEAM LEADS'),
+                }, '2026-27 SEASON SUBTEAM LEADS'),
 
                 // Subteam Row 1: Aero, Chassis
                 React.createElement('div', {
@@ -2330,21 +2399,6 @@
           }
         }, activeTab === 'overview' ? 'MODULE: OVERVIEW' : activeTab === 'team' ? 'MODULE: TEAM' : activeTab === 'sponsors' ? 'MODULE: SPONSORS' : 'MODULE: RECRUITMENT'),
 
-        // ZONE B: Panel line count (bottom-right corner)
-        layoutSplit && React.createElement('div', {
-          className: 'zone-marker',
-          style: {
-            position: 'absolute',
-            top: 'calc(40% + 210px)',
-            left: 'calc(27% + 330px)',
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '7px',
-            letterSpacing: '0.08em',
-            color: '#C7D7FF',
-            opacity: 0.25,
-            zIndex: 6
-          }
-        }, activeTab === 'team' ? 'LINES: 06' : activeTab === 'sponsors' ? 'LINES: 03' : 'LINES: 04'),
 
         // ZONE C: Car dimension line (wheelbase - horizontal under car)
         layoutSplit && React.createElement('div', {
