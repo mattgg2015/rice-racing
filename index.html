@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rice Racing</title>
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="./riceracing.png">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1008,13 +1008,13 @@
           className: 'cad-window',
           style: {
             position: windowState === 'fullscreen' ? 'fixed' : 'absolute',
-            top: windowState === 'fullscreen' ? '70px' : (windowState === 'minimized' ? '80%' : (isMobile ? '12%' : '18%')),
-            left: windowState === 'fullscreen' ? '50%' : (windowState === 'minimized' ? '50%' : (isMobile ? '50%' : (layoutSplit ? '30%' : '50%'))),
+            top: windowState === 'fullscreen' ? '70px' : (isMobile ? '12%' : '18%'),
+            left: windowState === 'fullscreen' ? '50%' : (isMobile ? '50%' : (layoutSplit ? '30%' : '50%')),
             transform: windowState === 'fullscreen'
               ? `translate(calc(-50% + ${windowPos.x}px), ${windowPos.y}px)`
               : `translate(calc(-50% + ${windowPos.x}px), calc(-10% + ${windowPos.y}px))`,
             zIndex: 5,
-            width: windowState === 'fullscreen' ? '95vw' : (windowState === 'minimized' ? '280px' : (isMobile ? '94%' : 'min(94%, 820px)')),
+            width: windowState === 'fullscreen' ? '95vw' : (windowState === 'minimized' ? '220px' : (isMobile ? '94%' : 'min(94%, 820px)')),
             maxWidth: windowState === 'fullscreen' ? '1200px' : '820px',
             opacity: layoutSplit ? 1 : 0,
             transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)'
@@ -1140,7 +1140,7 @@
                 })
               ),
 
-              // File name - RIGHT
+              // File name - RIGHT (shows current tab when minimized)
               React.createElement('div', {
                 style: {
                   fontFamily: '"Space Mono", monospace',
@@ -1148,7 +1148,7 @@
                   color: '#C4CEE8',
                   letterSpacing: '0.05em'
                 }
-              }, 'RICE_R1.FSAE')
+              }, windowState === 'minimized' ? `${activeTab.toUpperCase()}` : 'RICE_R1.FSAE')
             ),
 
             // Window content - conditional based on activeTab (hidden when minimized)
