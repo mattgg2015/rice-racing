@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rice Racing</title>
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="./riceracing.png">
+  <link rel="icon" type="image/png" href="./riceracingsmall-square.png">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1318,16 +1318,26 @@
                           border: '1px solid rgba(199, 215, 255, 0.2)'
                         }
                       }),
-                      React.createElement('img', {
-                        src: './IMG_2034 (1).jpg',
-                        alt: 'GBM Photo 3',
+                      React.createElement('div', {
                         style: {
                           width: 'calc(50% - 4px)',
-                          height: 'auto',
+                          overflow: 'hidden',
                           borderRadius: '4px',
                           border: '1px solid rgba(199, 215, 255, 0.2)'
                         }
-                      })
+                      },
+                        React.createElement('img', {
+                          src: './IMG_2040.JPG',
+                          alt: 'GBM Photo 3',
+                          style: {
+                            width: '100%',
+                            height: 'auto',
+                            display: 'block',
+                            // ROTATION ADJUSTMENT: change the 'deg' value to rotate. Positive = clockwise
+                            transform: 'scale(1.10) rotate(1.5deg)'
+                          }
+                        })
+                      )
                     )
                   ),
 
@@ -2031,6 +2041,43 @@
                   }
                 }, 'SUPPORT RICE RACING'),
 
+                // Founding partners intro
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Inter", sans-serif',
+                    fontSize: '14px',
+                    fontWeight: '400',
+                    color: '#C4CEE8',
+                    lineHeight: '1.7',
+                    marginBottom: '28px',
+                    padding: '16px',
+                    borderLeft: '3px solid #FFC94A',
+                    background: 'rgba(255, 201, 74, 0.05)'
+                  }
+                },
+                  'We are seeking ',
+                  React.createElement('span', {
+                    style: {
+                      color: '#FFC94A',
+                      fontWeight: '600'
+                    }
+                  }, 'founding partners'),
+                  ' to help build what we hope will become an institutional program at Rice for decades to come. Without our sponsors, our project is simply not possible.'
+                ),
+
+                // How to Give subtitle
+                React.createElement('div', {
+                  style: {
+                    fontFamily: '"Russo One", sans-serif',
+                    fontSize: 'clamp(16px, 2.5vw, 22px)',
+                    fontWeight: '400',
+                    letterSpacing: '0.05em',
+                    color: '#C7D7FF',
+                    marginBottom: '16px',
+                    textTransform: 'uppercase'
+                  }
+                }, 'How to Give'),
+
                 // Step-by-step instructions
                 React.createElement('div', {
                   style: {
@@ -2156,19 +2203,6 @@
                     )
                   )
                 ),
-
-                // Closing message
-                React.createElement('div', {
-                  style: {
-                    fontFamily: '"Inter", sans-serif',
-                    fontSize: '13px',
-                    fontWeight: '400',
-                    color: '#8995B0',
-                    lineHeight: '1.6',
-                    marginBottom: '24px',
-                    fontStyle: 'italic'
-                  }
-                }, 'Without our sponsors, our project is simply not possible.'),
 
                 // Call to action buttons
                 React.createElement('div', {
